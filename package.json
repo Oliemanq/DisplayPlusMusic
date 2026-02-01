@@ -24,6 +24,7 @@
     "@spotify/web-api-ts-sdk": "^1.2.0"
   },
   "devDependencies": {
+    "@types/node": "^25.1.0",
     "vite": "^7.3.1"
   }
 }

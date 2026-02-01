@@ -5,7 +5,7 @@ import {
     TextContainerProperty,
     ImageContainerProperty,
   } from '@evenrealities/even_hub_sdk';
-import imagePresenter from './presenter/imagePresenter';
+import imagePresenter from '../presenter/imagePresenter';
 
 async function createView() {
     const bridge = await waitForEvenAppBridge();

@@ -3,8 +3,8 @@ import spotifyModel from '../model/spotfiyModel';
 import Song from '../model/songModel';
 
 class SpotifyPresenter {
-    private SPOTIFY_KEYS: spotifyModel;
-    public spotifysdk: SpotifyApi;
+    readonly SPOTIFY_KEYS: spotifyModel;
+    readonly spotifysdk: SpotifyApi;
 
     currentSong: Song | null = null;
     
@@ -13,7 +13,7 @@ class SpotifyPresenter {
         this.spotifysdk = this.SPOTIFY_KEYS.spotifysdk;
     }
 
-    async getCurrentTrack() {
+    async fetchCurrentTrack() {
         const result = await this.spotifysdk.player.getCurrentlyPlayingTrack();
 
         //checking if item exists
@@ -47,3 +47,5 @@ class SpotifyPresenter {
         }
     }
 }
+
+export default SpotifyPresenter;

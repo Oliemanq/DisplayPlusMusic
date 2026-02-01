@@ -1,13 +1,12 @@
 import { waitForEvenAppBridge } from '@evenrealities/even_hub_sdk';
+import SpotifyPresenter from './presenter/spotifyPresenter';
 
-// Wait for bridge initialization
-const bridge = await waitForEvenAppBridge();
+console.log("Setting keys");
+const clientID = '29a961338df9480db3c1b50e10df184f'
+const clientSecret = 'af3da2d50cf44657842880cb5997f762'
 
-// Get user information
-const user = await bridge.getUserInfo();
-console.log('User:', user.name);
+const spotifyPresenter = new SpotifyPresenter();
 
-// Get device information
-const device = await bridge.getDeviceInfo();
-console.log('Device Model:', device?.model);
+spotifyPresenter.SPOTIFY_KEYS.setKeys(clientID, clientSecret);
 
+spotifyPresenter.fetchCurrentTrack();

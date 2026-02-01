@@ -1,0 +1,29 @@
+{
+  "name": "displayplus-music",
+  "version": "1.0.0",
+  "description": "Music display for the Even G2 smart glasses",
+  "homepage": "https://github.com/Oliemanq/DisplayPlusMusic#readme",
+  "bugs": {
+    "url": "https://github.com/Oliemanq/DisplayPlusMusic/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Oliemanq/DisplayPlusMusic.git"
+  },
+  "license": "ISC",
+  "author": "Oliemanq",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@evenrealities/even_hub_sdk": "^0.0.6",
+    "@spotify/web-api-ts-sdk": "^1.2.0"
+  },
+  "devDependencies": {
+    "vite": "^7.3.1"
+  }
+}

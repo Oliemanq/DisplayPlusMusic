@@ -1,0 +1,19 @@
+{
+  "package_id": "com.Oliemanq.DisplayPlus-Music",
+  "edition": "202601",
+  "name": "DisplayPlus - Music",
+  "version": "0.1.0",
+  "min_app_version": "0.1.0",
+  "tagline": "Spotify player for Even",
+  "description": "Music player based on DisplayPlus for the G1's. Requires a premium spotify account.",
+  "author": "Oliemanq",
+  "entrypoint": "index.html",
+  "permissions": {
+    "network": [
+      "evenhub.evenrealities.com"
+    ],
+    "fs": [
+      "./assets"
+    ]
+  }
+}

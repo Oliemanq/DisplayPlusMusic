@@ -1,20 +1,19 @@
 import { SpotifyApi, Track, Episode } from "@spotify/web-api-ts-sdk";
-import spotifyModel from '../model/spotfiyModel';
+import SPOTIFY_KEYS from '../model/spotifyModel';
 import Song from '../model/songModel';
 
-class SpotifyPresenter {
-    readonly SPOTIFY_KEYS: spotifyModel;
-    readonly spotifysdk: SpotifyApi;
+const spotifysdk = SpotifyApi.withClientCredentials(
+    SPOTIFY_KEYS.USER_CLIENTID, 
+    SPOTIFY_KEYS.USER_CLIENTSECRET, 
+    SPOTIFY_KEYS.SCOPE
+)
 
+class SpotifyPresenter {
     currentSong: Song | null = null;
-    
-    constructor() {
-        this.SPOTIFY_KEYS = new spotifyModel();
-        this.spotifysdk = this.SPOTIFY_KEYS.spotifysdk;
-    }
 
     async fetchCurrentTrack() {
-        const result = await this.spotifysdk.player.getCurrentlyPlayingTrack();
+        const result = await spotifysdk.player.getCurrentlyPlayingTrack();
+        console.log("fetched current track for \n " + SPOTIFY_KEYS.USER_CLIENTID + " client id" + "\n" + SPOTIFY_KEYS.USER_CLIENTSECRET + " client secret" + "\n " + result);
 
         //checking if item exists
         if (!result || !result.item) {
@@ -48,4 +47,7 @@ class SpotifyPresenter {
     }
 }
 
-export default SpotifyPresenter;
+const spotifyPresenter = new SpotifyPresenter();
+
+export default spotifyPresenter
+export const fetchCurrentTrack = spotifyPresenter.fetchCurrentTrack.bind(spotifyPresenter);

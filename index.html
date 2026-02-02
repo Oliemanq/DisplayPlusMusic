@@ -12,16 +12,19 @@
     <h1>Even Realities Controller</h1>
     <div id="status">Connecting...</div>
 
+    <!-- Main.ts handles Spotify auth + glasses view setup on load -->
     <script type="module" src="/src/Main.ts"></script>
 
     <button id="fetchTrackButton">Fetch Current Track</button>
 
     <script type="module">
-        import { fetchCurrentTrack } from './src/presenter/spotifyPresenter.ts';
+        import { fetchCurrentTrack } from './src/model/spotifyModel.ts';
 
         document.getElementById('fetchTrackButton').addEventListener('click', () => {
             fetchCurrentTrack();
         });
     </script>
+
+    <img id="album-art"><img/>
 </body>
 </html>

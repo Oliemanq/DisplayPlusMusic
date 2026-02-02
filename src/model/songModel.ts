@@ -5,12 +5,14 @@ class Song {
     artist: string;
     features: string[];
     album: string;
+    songID: string;
 
     constructor() {
         this.title = "None";
         this.artist = "None";
         this.features = [""];
         this.album = "None";
+        this.songID = "0";
     }
     addTitle(newTitle: string) {
         this.title = newTitle;
@@ -23,6 +25,9 @@ class Song {
     }
     addAlbum(newAlbum: string) {
         this.album = newAlbum;
+    }
+    addID(newID: string) {
+        this.songID = newID;
     }
 }
 

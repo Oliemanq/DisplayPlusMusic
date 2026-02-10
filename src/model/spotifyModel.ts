@@ -33,7 +33,7 @@ class SpotifyModel {
     SCOPE = ['user-modify-playback-state', 'user-read-playback-state'];
 
     currentSong = new Song();
-    lastSongID = '';
+    lastSong = new Song();
 
     async fetchCurrentTrack(): Promise<Song> {
         let result;
@@ -51,25 +51,49 @@ class SpotifyModel {
         }
 
         if (result.item.type === 'track') {
-            const tempSong = new Song()
             const track = result.item as Track;
+            // Check if the song has changed
+            if (track.id !== this.lastSong.songID) {
+                const newSong = new Song();
+                newSong.addID(track.id);
+                newSong.addisPlaying(result.is_playing);
+                newSong.addTitle(track.name);
 
-            tempSong.addTitle(track.name);
+                const artistNames = track.artists.map(artist => artist.name);
+                newSong.addArtist(artistNames[0]);
+                newSong.addFeatures(artistNames.slice(1));
 
-            const artistNames = track.artists.map(artist => artist.name);
-            tempSong.addArtist(artistNames[0]);
-            tempSong.addFeatures(artistNames.slice(1));
-            tempSong.addAlbum(track.album.name);
+                newSong.addAlbum(track.album.name);
+                newSong.addDurationSeconds(track.duration_ms / 1000);
+                newSong.addProgressSeconds(result.progress_ms / 1000);
+                newSong.addArt(await this.fetchAlbumArt(track));
 
-            tempSong.addID(track.id);
+                newSong.addChangedState(true);
 
-            console.log(
-                `Now Playing: ${tempSong.title} by ${tempSong.artist}` +
-                (tempSong.features.length ? `, featuring ${tempSong.features.join(", ")}` : "")
-            );
-            this.lastSongID = this.currentSong.songID
-            this.currentSong = tempSong;
-            return tempSong;
+                if (newSong.isPlaying) {
+                    console.log(
+                        `Now Playing: ${newSong.title} by ${newSong.artist}` +
+                        (newSong.features.length ? `, featuring ${newSong.features.join(", ")}` : "")
+                    );
+                } else {
+                    console.log(
+                        `Paused: ${newSong.title} by ${newSong.artist}` +
+                        (newSong.features.length ? `, featuring ${newSong.features.join(", ")}` : "")
+                    );
+                }
+
+                this.lastSong = newSong;
+                this.currentSong = newSong;
+                return newSong;
+            } else {
+                // Song hasn't changed, just update dynamic fields
+                this.lastSong.addisPlaying(result.is_playing);
+                this.lastSong.addProgressSeconds(result.progress_ms / 1000);
+                this.lastSong.addChangedState(false);
+
+                this.currentSong = this.lastSong;
+                return this.lastSong;
+            }
 
         } else if (result.item.type === 'episode') {
             const episode = result.item as Episode;
@@ -80,52 +104,30 @@ class SpotifyModel {
             tempSong.addID(episode.id);
 
             console.log(`Now Playing Episode: ${episode.name} (Show: ${episode.show.name})`);
-            this.lastSongID = this.currentSong.songID;
             this.currentSong = tempSong;
+
+
             return tempSong;
         }
         console.log("Broken somehow, return outside of logic")
         return new Song();
     }
 
-    async fetchAlbumArt(): Promise<Blob> {
-        let result;
-        try {
-            result = await spotifysdk.player.getCurrentlyPlayingTrack();
-        } catch (err) {
-            console.error("Failed to fetch currently playing track:", err);
-            return new Blob();
-        }
+    async fetchAlbumArt(track: Track): Promise<Blob> {
+        let images = track.album.images;
 
-        // No item means nothing is playing.
-        if (!result || !result.item) {
-            console.log("User is not playing anything currently.");
-            return new Blob();
-        }
+        if (images.length > 1) {
+            const imageUrl = images[1].url;
 
-        console.log(`New Track Detected: ${result.item.name}`);
-        this.lastSongID = result.item.id;
+            console.log("Found image, returning blob")
+            let art = await downloadImage(imageUrl);
 
-        if (result.item.type === 'track') {
-            let track = result.item as Track
-            
-            let images = track.album.images;
-
-            if (images.length > 0) {
-                const imageUrl = images[1].url;
-                
-                console.log("Found image, returning blob")
-                let art = await downloadImage(imageUrl);
-
-                const imgElement = document.getElementById('album-art') as HTMLImageElement;
-                if (imgElement) {
-                    imgElement.src = URL.createObjectURL(art);
-                }
-                console.log("blob info prints \nart.size " + art.size + "\nart.type " + art.type + "\nart.text " + art.text + "\nart.stream " + art.stream);
-                return art;
+            const imgElement = document.getElementById('album-art') as HTMLImageElement;
+            if (imgElement) {
+                imgElement.src = URL.createObjectURL(art);
             }
+            return art;
         }
-
         console.log("Track is not a song and doesn't have art. Returning blank")
         return new Blob();
     }

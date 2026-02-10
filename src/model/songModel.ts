@@ -7,12 +7,28 @@ class Song {
     album: string;
     songID: string;
 
+    progressSeconds: number;
+    durationSeconds: number;
+
+    albumArt: Blob
+
+    isPlaying: Boolean
+    songChanged: Boolean
+
     constructor() {
         this.title = "None";
         this.artist = "None";
         this.features = [""];
         this.album = "None";
         this.songID = "0";
+
+        this.progressSeconds = 0;
+        this.durationSeconds = 0;
+
+        this.albumArt = new Blob();
+
+        this.isPlaying = false;
+        this.songChanged = false;
     }
     addTitle(newTitle: string) {
         this.title = newTitle;
@@ -28,6 +44,28 @@ class Song {
     }
     addID(newID: string) {
         this.songID = newID;
+    }
+
+    addProgressSeconds(newProgressSeconds: number) {
+        this.progressSeconds = newProgressSeconds;
+    }
+    addDurationSeconds(newDurationSeconds: number) {
+        this.durationSeconds = newDurationSeconds;
+    }
+    addArt(newArt: Blob) {
+        this.albumArt = newArt;
+    }
+    addisPlaying(newState: Boolean) {
+        this.isPlaying = newState;
+    }
+    toggleisPlaying() {
+        this.isPlaying = !this.isPlaying
+    }
+    addChangedState(newState: Boolean) {
+        this.songChanged = newState;
+    }
+    toggleSongChanged() {
+        this.songChanged = !this.songChanged
     }
 }
 

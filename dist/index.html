@@ -1,14 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Even Realities App</title>
-  <script type="module" crossorigin src="/assets/index-BIsefEVH.js"></script>
+    <meta http-equiv="Content-Security-Policy"
+        content="script-src 'self' 'unsafe-inline' https://accounts.scdn.co https://sdk.scdn.co;" />
+  <script type="module" crossorigin src="/assets/index-DAijhd2p.js"></script>
 </head>
-<body>
-    <h1>Even Realities Controller</h1>
-    <div id="status">Connecting...</div>
 
+<body>
+    <!-- Main.ts handles Spotify auth + glasses view setup on load -->
+
+
+    <span id="album-art-container" class="container">
+        <img id="album-art" />
+    </span>
+    <span id="track-info" class="container">
+        <button id="fetchTrackButton">Fetch Current Track</button>
+        <p id="track-name" class="info"></p>
+        <p id="artist-name" class="info"></p>
+        <p id="album-name" class="info"></p>
+        <p id="track-progress" class="info"></p>
+        <p id="track-duration" class="info"></p>
+    </span>
+
+    <style>
+        .container {
+            margin-top: 20px;
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+
+
+        #fetchTrackButton {
+            background-color: #000;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .info {
+            color: #000;
+            background-color: aquamarine;
+            padding: 5px;
+            border-radius: 5px;
+        }
+    </style>
 </body>
+
 </html>

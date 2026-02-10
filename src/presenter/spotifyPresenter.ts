@@ -45,17 +45,19 @@ class SpotifyPresenter {
             this.pollingTimeout = window.setTimeout(() => this.poll(), this.pollingRate);
         }
     }
+    private formatTime(seconds: number): string {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+
 
     async fetchCurrentSong() {
         let temp = await spotifyModel.fetchCurrentTrack();
         this.updateHTML(temp)
         return temp
     }
-    private formatTime(seconds: number): string {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = Math.floor(seconds % 60);
-        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-    }
+
 
     async updateHTML(song: Song) {
         document.getElementById('track-name')!.textContent = song.title;

@@ -52,8 +52,8 @@ class SpotifyModel {
 
         if (result.item.type === 'track') {
             const track = result.item as Track;
-            // Check if the song has changed
-            if (track.id !== this.lastSong.songID) {
+
+            if (track.id !== this.lastSong.songID) { // Check if the song has changed
                 const newSong = new Song();
                 newSong.addID(track.id);
                 newSong.addisPlaying(result.is_playing);
@@ -72,12 +72,12 @@ class SpotifyModel {
 
                 if (newSong.isPlaying) {
                     console.log(
-                        `Now Playing: ${newSong.title} by ${newSong.artist}` +
+                        `Updated playing song\n  - ${newSong.title} by ${newSong.artist}` +
                         (newSong.features.length ? `, featuring ${newSong.features.join(", ")}` : "")
                     );
                 } else {
                     console.log(
-                        `Paused: ${newSong.title} by ${newSong.artist}` +
+                        `Updated paused song\n ${newSong.title} by ${newSong.artist}` +
                         (newSong.features.length ? `, featuring ${newSong.features.join(", ")}` : "")
                     );
                 }
@@ -85,8 +85,22 @@ class SpotifyModel {
                 this.lastSong = newSong;
                 this.currentSong = newSong;
                 return newSong;
-            } else {
-                // Song hasn't changed, just update dynamic fields
+
+            } else { // Song hasn't changed, just update dynamic fields
+                if (this.lastSong.isPlaying !== result.is_playing) {
+                    if (result.is_playing) {
+                        console.log(
+                            `Resumed: ${this.lastSong.title} by ${this.lastSong.artist}` +
+                            (this.lastSong.features.length ? `, featuring ${this.lastSong.features.join(", ")}` : "")
+                        );
+                    } else {
+                        console.log(
+                            `Paused: ${this.lastSong.title} by ${this.lastSong.artist}` +
+                            (this.lastSong.features.length ? `, featuring ${this.lastSong.features.join(", ")}` : "")
+                        );
+                    }
+                }
+
                 this.lastSong.addisPlaying(result.is_playing);
                 this.lastSong.addProgressSeconds(result.progress_ms / 1000);
                 this.lastSong.addChangedState(false);
@@ -135,4 +149,3 @@ class SpotifyModel {
 
 const spotifyModel = new SpotifyModel();
 export default spotifyModel;
-export const fetchCurrentTrack = spotifyModel.fetchCurrentTrack.bind(spotifyModel);

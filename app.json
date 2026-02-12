@@ -10,7 +10,14 @@
   "entrypoint": "index.html",
   "permissions": {
     "network": [
-      "evenhub.evenrealities.com"
+      "evenhub.evenrealities.com",
+      "https://api.spotify.com/v1/*",
+      "https://accounts.spotify.com/*",
+      "https://encore.scdn.co/*",
+      "https://apresolve.spotify.com/*",
+      "https://gue1-spclient.spotify.com/*",
+      "https://accounts.scdn.co/*",
+      "https://sdk.scdn.co/*"
     ],
     "fs": [
       "./assets"

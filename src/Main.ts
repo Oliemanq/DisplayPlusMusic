@@ -8,6 +8,7 @@ async function main() {
 
     spotifyPresenter.startPolling();
 
+
 }
 
 main();

@@ -1,5 +1,6 @@
 import spotifyModel from '../model/spotifyModel';
 import Song from '../model/songModel';
+import { formatTime } from '../Scripts/formatTime';
 
 class SpotifyPresenter {
     constructor() {
@@ -45,12 +46,6 @@ class SpotifyPresenter {
             this.pollingTimeout = window.setTimeout(() => this.poll(), this.pollingRate);
         }
     }
-    private formatTime(seconds: number): string {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = Math.floor(seconds % 60);
-        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-    }
-
 
     async fetchCurrentSong() {
         let temp = await spotifyModel.fetchCurrentTrack();
@@ -58,13 +53,12 @@ class SpotifyPresenter {
         return temp
     }
 
-
     async updateHTML(song: Song) {
         document.getElementById('track-name')!.textContent = song.title;
         document.getElementById('artist-name')!.textContent = song.artist;
         document.getElementById('album-name')!.textContent = song.album;
-        document.getElementById('track-progress')!.textContent = this.formatTime(song.progressSeconds);
-        document.getElementById('track-duration')!.textContent = this.formatTime(song.durationSeconds);
+        document.getElementById('track-progress')!.textContent = formatTime(song.progressSeconds);
+        document.getElementById('track-duration')!.textContent = formatTime(song.durationSeconds);
         document.getElementById('paused-state')!.textContent = song.isPlaying ? "Playing" : "Paused";
 
         const imgElement = document.getElementById('album-art') as HTMLImageElement;

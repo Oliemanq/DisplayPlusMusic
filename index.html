@@ -17,9 +17,6 @@
         import spotifyPresenter from './src/presenter/spotifyPresenter.ts';
         import { createView } from './src/view/GlassesView.ts';
 
-        document.getElementById('fetchTrackButton').addEventListener('click', () => {
-            spotifyPresenter.fetchCurrentSong();
-        });
         document.getElementById('display-on-glasses').addEventListener('click', () => {
             createView();
         })
@@ -28,7 +25,7 @@
         <img id="album-art" />
     </span>
     <span id="track-info" class="container">
-        <button id="fetchTrackButton">Fetch Current Track</button>
+        <button id="refresh-fetch">Fetch refresh token</button>
         <p id="track-name" class="info"></p>
         <p id="artist-name" class="info"></p>
         <p id="album-name" class="info"></p>
@@ -54,7 +51,8 @@
 
 
         #fetchTrackButton,
-        #display-on-glasses {
+        #display-on-glasses,
+        #refresh-fetch {
             background-color: #000;
             color: #fff;
             border: none;

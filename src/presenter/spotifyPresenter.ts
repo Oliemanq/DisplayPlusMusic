@@ -1,6 +1,7 @@
 import spotifyModel from '../model/spotifyModel';
 import Song from '../model/songModel';
 import { formatTime } from '../Scripts/formatTime';
+import { createView } from '../view/GlassesView';
 
 class SpotifyPresenter {
     constructor() {
@@ -15,8 +16,9 @@ class SpotifyPresenter {
     }
 
     private isPolling = false;
-    private pollingRate = 250; //Polling rate in ms
+    private pollingRate = 1000; //Polling rate in ms
     private pollingTimeout: number | undefined;
+    private currentSong?: Song
 
     async startPolling() {
         if (this.isPolling) return;
@@ -36,7 +38,8 @@ class SpotifyPresenter {
         if (!this.isPolling) return;
 
         try {
-            await this.fetchCurrentSong();
+            this.currentSong = await this.fetchCurrentSong();
+            createView(this.currentSong);
         } catch (error) {
             console.error("Error fetching song:", error);
         }
@@ -47,7 +50,7 @@ class SpotifyPresenter {
         }
     }
 
-    async fetchCurrentSong() {
+    async fetchCurrentSong(): Promise<Song> {
         let temp = await spotifyModel.fetchCurrentTrack();
         this.updateHTML(temp)
         return temp

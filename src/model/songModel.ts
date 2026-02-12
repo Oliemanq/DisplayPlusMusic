@@ -11,6 +11,8 @@ class Song {
     durationSeconds: number;
 
     albumArt: Blob
+    albumArtBase64: string
+    albumArtBMP: Blob
 
     isPlaying: Boolean
     songChanged: Boolean
@@ -26,6 +28,8 @@ class Song {
         this.durationSeconds = 0;
 
         this.albumArt = new Blob();
+        this.albumArtBase64 = '';
+        this.albumArtBMP = new Blob();
 
         this.isPlaying = false;
         this.songChanged = false;
@@ -54,6 +58,12 @@ class Song {
     }
     addArt(newArt: Blob) {
         this.albumArt = newArt;
+    }
+    addArtBase64(newArtBase64: string) {
+        this.albumArtBase64 = newArtBase64;
+    }
+    addArtBMP(newArt: Blob) {
+        this.albumArtBMP = newArt;
     }
     addisPlaying(newState: Boolean) {
         this.isPlaying = newState;

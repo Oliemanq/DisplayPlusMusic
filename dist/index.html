@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <title>Even Realities App</title>
     <meta http-equiv="Content-Security-Policy"
-        content="script-src 'self' 'unsafe-inline' https://accounts.scdn.co https://sdk.scdn.co;" />
-  <script type="module" crossorigin src="/assets/index-CmQfrME3.js"></script>
+        content="script-src 'self' 'unsafe-inline' https://accounts.scdn.co https://sdk.scdn.co blob:; worker-src 'self' blob:;" />
+  <script type="module" crossorigin src="/assets/index-Ckzn1lUH.js"></script>
 </head>
 
 <body>
@@ -24,6 +24,7 @@
         <p id="track-progress" class="info"></p>
         <p id="track-duration" class="info"></p>
         <p id="paused-state" class="info"></p>
+        <button id="display-on-glasses">Display on glasses</button>
     </span>
 
     <style>
@@ -41,7 +42,8 @@
 
 
 
-        #fetchTrackButton {
+        #fetchTrackButton,
+        #display-on-glasses {
             background-color: #000;
             color: #fff;
             border: none;

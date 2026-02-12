@@ -419,3 +419,4 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+src/model/imageModel.ts

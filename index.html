@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <title>Even Realities App</title>
     <meta http-equiv="Content-Security-Policy"
-        content="script-src 'self' 'unsafe-inline' https://accounts.scdn.co https://sdk.scdn.co;" />
+        content="script-src 'self' 'unsafe-inline' https://accounts.scdn.co https://sdk.scdn.co blob:; worker-src 'self' blob:;" />
 </head>
 
 <body>
@@ -15,10 +15,14 @@
 
     <script type="module">
         import spotifyPresenter from './src/presenter/spotifyPresenter.ts';
+        import { createView } from './src/view/GlassesView.ts';
 
         document.getElementById('fetchTrackButton').addEventListener('click', () => {
             spotifyPresenter.fetchCurrentSong();
         });
+        document.getElementById('display-on-glasses').addEventListener('click', () => {
+            createView();
+        })
     </script>
     <span id="album-art-container" class="container">
         <img id="album-art" />
@@ -31,6 +35,7 @@
         <p id="track-progress" class="info"></p>
         <p id="track-duration" class="info"></p>
         <p id="paused-state" class="info"></p>
+        <button id="display-on-glasses">Display on glasses</button>
     </span>
 
     <style>
@@ -48,7 +53,8 @@
 
 
 
-        #fetchTrackButton {
+        #fetchTrackButton,
+        #display-on-glasses {
             background-color: #000;
             color: #fff;
             border: none;

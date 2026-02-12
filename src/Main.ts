@@ -1,6 +1,6 @@
 import { initSpotify } from './model/spotifyModel';
 import spotifyPresenter from './presenter/spotifyPresenter';
-import createView from './view/GlassesView';
+import { createView } from './view/GlassesView';
 
 async function main() {
 
@@ -8,7 +8,7 @@ async function main() {
 
     spotifyPresenter.startPolling();
 
-
+    createView();
 }
 
 main();

@@ -1,6 +1,6 @@
 import { SpotifyApi, Track, Episode } from "@spotify/web-api-ts-sdk";
 import Song from '../model/songModel';
-import { downloadImage, downloadImageAsBase64, downloadImageAsBMP } from "./imageModel";
+import { downloadImage, downloadImageAsBase64, downloadImageAsGrayscalePng } from "./imageModel";
 import { waitForEvenAppBridge } from '@evenrealities/even_hub_sdk';
 
 let spotifysdk!: SpotifyApi;
@@ -119,7 +119,7 @@ class SpotifyModel {
     currentSong = new Song();
     lastSong = new Song();
 
-    imageIndex = 2;
+    imageIndex = 1;
 
     async fetchCurrentTrack(): Promise<Song> {
         let result;
@@ -154,7 +154,7 @@ class SpotifyModel {
                 newSong.addProgressSeconds(result.progress_ms / 1000);
                 newSong.addArt(await this.fetchAlbumArt(track));
                 newSong.addArtBase64(await this.fetchAlbumArtBase64(track));
-                newSong.addArtBMP(await this.fetchAlbumArtBMP(track));
+                newSong.addArtRaw(await this.fetchAlbumArtPng(track));
 
                 newSong.addChangedState(true);
 
@@ -250,15 +250,15 @@ class SpotifyModel {
         console.log("Track is not a song and doesn't have art. Returning blank")
         return "";
     }
-    async fetchAlbumArtBMP(track: Track): Promise<Blob> {
+    async fetchAlbumArtPng(track: Track): Promise<Uint8Array> {
         let images = track.album.images;
 
         if (images.length > 1) {
             const imageUrl = images[this.imageIndex].url;
-            let art = await downloadImageAsBMP(imageUrl);
+            let art = await downloadImageAsGrayscalePng(imageUrl, 100, 100);
             return art;
         }
-        return new Blob();
+        return new Uint8Array();
     }
 }
 

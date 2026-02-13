@@ -65,9 +65,9 @@ class SpotifyPresenter {
         document.getElementById('paused-state')!.textContent = song.isPlaying ? "Playing" : "Paused";
 
         const imgElement = document.getElementById('album-art') as HTMLImageElement;
-        if (imgElement) {
-            imgElement.src = URL.createObjectURL(song.albumArt);
-            imgElement.style.filter = 'grayscale(100%) sepia(100%) hue-rotate(90deg) saturate(5)';
+        if (imgElement && song.albumArtRaw.length > 0) {
+            const blob = new Blob([song.albumArtRaw] as BlobPart[], { type: 'image/png' });
+            imgElement.src = URL.createObjectURL(blob);
         }
     }
 }

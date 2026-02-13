@@ -12,7 +12,7 @@ class Song {
 
     albumArt: Blob
     albumArtBase64: string
-    albumArtBMP: Blob
+    albumArtRaw: Uint8Array
 
     isPlaying: Boolean
     songChanged: Boolean
@@ -29,7 +29,7 @@ class Song {
 
         this.albumArt = new Blob();
         this.albumArtBase64 = '';
-        this.albumArtBMP = new Blob();
+        this.albumArtRaw = new Uint8Array();
 
         this.isPlaying = false;
         this.songChanged = false;
@@ -62,8 +62,8 @@ class Song {
     addArtBase64(newArtBase64: string) {
         this.albumArtBase64 = newArtBase64;
     }
-    addArtBMP(newArt: Blob) {
-        this.albumArtBMP = newArt;
+    addArtRaw(newArt: Uint8Array) {
+        this.albumArtRaw = newArt;
     }
     addisPlaying(newState: Boolean) {
         this.isPlaying = newState;

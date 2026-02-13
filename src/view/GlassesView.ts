@@ -5,6 +5,7 @@ import {
     ImageContainerProperty,
     ImageRawDataUpdate,
     RebuildPageContainer,
+    TextContainerUpgrade,
 
 } from '@evenrealities/even_hub_sdk';
 
@@ -14,7 +15,8 @@ import Song from '../model/songModel';
 // State management variables
 let isPageCreated = false;
 let isUpdating = false;
-let lastImageBase64: string | undefined = undefined;
+let lastImageRaw: Uint8Array | undefined = undefined;
+let lastConfig: string = "";
 let MAX_HEIGHT = 288;
 let MAX_WIDTH = 576
 
@@ -31,10 +33,10 @@ async function createView(songIn: Song) {
         const bridge = await waitForEvenAppBridge();
 
         const imageContainer = new ImageContainerProperty({
-            xPosition: 300,
+            xPosition: 0,
             yPosition: 0,
-            width: 200,
-            height: 50,
+            width: 100,
+            height: 100,
             containerID: 3,
             containerName: 'album-art',
         });
@@ -42,7 +44,7 @@ async function createView(songIn: Song) {
         const text = songIn.title + " - " + songIn.artist + "\n" + formatTime(songIn.progressSeconds) + " > " + formatTime(songIn.durationSeconds);
         const textContainer = new TextContainerProperty({
             xPosition: 0,
-            yPosition: 0,
+            yPosition: 110,
             width: 300,
             height: MAX_HEIGHT,
             borderRdaius: 6,
@@ -55,8 +57,8 @@ async function createView(songIn: Song) {
 
         const containerConfig = {
             containerTotalNum: 2,
-            imageObject: [imageContainer],
             textObject: [textContainer],
+            imageObject: [imageContainer],
         };
 
         // If page is not created, try to create it.
@@ -67,6 +69,11 @@ async function createView(songIn: Song) {
             if (result === 0) {
                 console.log('Container created successfully');
                 isPageCreated = true;
+                const layoutConfig = {
+                    ...containerConfig,
+                    textObject: containerConfig.textObject?.map((t: any) => ({ ...t, content: '' }))
+                };
+                lastConfig = JSON.stringify(layoutConfig);
             } else if (result === 1) {
                 // Result 1 (invalid) likely means container already exists.
                 // Mark as created so we proceed to rebuild next.
@@ -79,26 +86,52 @@ async function createView(songIn: Song) {
         }
 
         // If page is created (or existed), rebuild/update it.
+        // If page is created (or existed), rebuild/update it.
         if (isPageCreated) {
-            // Use RebuildPageContainer for updates
-            const rebuildContainer = new RebuildPageContainer(containerConfig);
-            const result = await bridge.rebuildPageContainer(rebuildContainer);
+            // Create a layout-only config for comparison (exclude dynamic content)
+            const layoutConfig = {
+                ...containerConfig,
+                textObject: containerConfig.textObject?.map((t: any) => ({ ...t, content: '' }))
+            };
+            const currentLayoutStr = JSON.stringify(layoutConfig);
 
-            if (result) {
-                // Only update image if it has changed
+            if (currentLayoutStr !== lastConfig) {
+                // Config changed, rebuild
+                console.log("Layout config changed, rebuilding page container...");
+                const rebuildContainer = new RebuildPageContainer(containerConfig);
+                await bridge.rebuildPageContainer(rebuildContainer);
+                lastConfig = currentLayoutStr;
+            } else {
+                // If config hasn't changed, try to just upgrade the text content
+                // This avoids clearing the screen/image
                 try {
+                    const upgrade = new TextContainerUpgrade({
+                        containerID: 1,
+                        containerName: 'text-1',
+                        content: text,
+                    });
+                    await bridge.textContainerUpgrade(upgrade);
+                } catch (e) {
+                    console.error("Failed to upgrade text container:", e);
+                }
+            }
+
+            console.log("Checking image update. Raw length:", songIn.albumArtRaw?.length, "Last length:", lastImageRaw?.length);
+
+            // Only update image if it has changed
+            if (songIn.albumArtRaw && songIn.albumArtRaw.length > 0 && songIn.albumArtRaw !== lastImageRaw) {
+                try {
+                    console.log("Updating image container due to change")
                     await bridge.updateImageRawData(new ImageRawDataUpdate({
                         containerID: 3,
                         containerName: 'album-art',
-                        imageData: await songIn.albumArtBMP.arrayBuffer(),
+                        imageData: Array.from(songIn.albumArtRaw),
                     }));
                     console.log("Image data updated successfully");
-                    lastImageBase64 = songIn.albumArtBase64;
+                    lastImageRaw = songIn.albumArtRaw;
                 } catch (e) {
                     console.error("Failed to update image data:", e);
                 }
-            } else {
-                console.warn("Failed to rebuild page container - possibly busy or disconnected. Will retry next cycle.");
             }
         }
     } catch (e) {

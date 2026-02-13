@@ -1,3 +1,5 @@
+import { encodeGrayscalePng } from '../Scripts/pngEncoder';
+
 class ImageModel {
   async downloadImage(url: string): Promise<Blob> {
     const response = await fetch(url);
@@ -18,43 +20,57 @@ class ImageModel {
       reader.readAsDataURL(blob);
     });
   }
-  async downloadImageAsBMP(url: string): Promise<Blob> {
+  async downloadImageAsGrayscalePng(url: string, targetWidth?: number, targetHeight?: number): Promise<Uint8Array> {
     const blob = await this.downloadImage(url);
     const bitmap = await createImageBitmap(blob);
-    const width = bitmap.width;
-    const height = bitmap.height;
+    let width = bitmap.width;
+    let height = bitmap.height;
 
-    let blobBmp: Blob | null = null;
+    // Use target dimensions if provided
+    if (targetWidth && targetHeight) {
+      width = targetWidth;
+      height = targetHeight;
+    }
+
+    let canvas: OffscreenCanvas | HTMLCanvasElement;
+    let ctx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D | null;
 
     if (typeof OffscreenCanvas !== 'undefined') {
-      const canvas = new OffscreenCanvas(width, height);
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(bitmap, 0, 0);
-        blobBmp = await canvas.convertToBlob({ type: 'image/bmp' });
-      }
-    }
-
-    if (!blobBmp) {
-      const canvas = document.createElement('canvas');
+      canvas = new OffscreenCanvas(width, height);
+      ctx = canvas.getContext('2d');
+    } else {
+      canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(bitmap, 0, 0);
-        blobBmp = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/bmp'));
-      }
+      ctx = canvas.getContext('2d');
     }
 
-    if (!blobBmp) {
-      throw new Error('Failed to convert image to BMP');
+    if (!ctx) {
+      throw new Error('Could not get canvas context');
     }
 
-    return blobBmp;
+    // Draw image to fit the target dimensions
+    ctx.drawImage(bitmap, 0, 0, width, height);
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const data = imageData.data;
+
+    const grayscaleData = new Uint8Array(width * height);
+
+    for (let i = 0; i < width * height; i++) {
+      const offset = i * 4;
+      const r = data[offset];
+      const g = data[offset + 1];
+      const b = data[offset + 2];
+      // Standard grayscale formula
+      const avg = 0.299 * r + 0.587 * g + 0.114 * b;
+      grayscaleData[i] = avg;
+    }
+
+    return encodeGrayscalePng(width, height, grayscaleData);
   }
 }
 
 const imageModel = new ImageModel
 export const downloadImage = imageModel.downloadImage.bind(imageModel);
 export const downloadImageAsBase64 = imageModel.downloadImageAsBase64.bind(imageModel);
-export const downloadImageAsBMP = imageModel.downloadImageAsBMP.bind(imageModel);
+export const downloadImageAsGrayscalePng = imageModel.downloadImageAsGrayscalePng.bind(imageModel);

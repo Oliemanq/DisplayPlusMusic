@@ -57,12 +57,9 @@ class SpotifyPresenter {
     }
 
     async updateHTML(song: Song) {
-        document.getElementById('track-name')!.textContent = song.title;
-        document.getElementById('artist-name')!.textContent = song.artist;
-        document.getElementById('album-name')!.textContent = song.album;
-        document.getElementById('track-progress')!.textContent = formatTime(song.progressSeconds);
-        document.getElementById('track-duration')!.textContent = formatTime(song.durationSeconds);
-        document.getElementById('paused-state')!.textContent = song.isPlaying ? "Playing" : "Paused";
+        document.getElementById('song-name')!.textContent = song.title;
+        document.getElementById('song-artist')!.textContent = song.artist;
+        document.getElementById('song-album')!.textContent = song.album;
 
         const imgElement = document.getElementById('album-art') as HTMLImageElement;
         if (imgElement && song.albumArtRaw.length > 0) {

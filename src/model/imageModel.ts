@@ -1,8 +1,12 @@
 import { encodeGrayscalePng } from '../Scripts/pngEncoder';
 
 class ImageModel {
-  async downloadImage(url: string): Promise<Blob> {
-    const response = await fetch(url);
+  async downloadImage(source: string | Blob): Promise<Blob> {
+    if (source instanceof Blob) {
+      return source;
+    }
+
+    const response = await fetch(source);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch image: ${response.statusText}`);
@@ -10,8 +14,8 @@ class ImageModel {
 
     return await response.blob();
   }
-  async downloadImageAsBase64(url: string): Promise<string> {
-    const blob = await downloadImage(url);
+  async downloadImageAsBase64(source: string | Blob): Promise<string> {
+    const blob = await this.downloadImage(source);
 
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -20,8 +24,8 @@ class ImageModel {
       reader.readAsDataURL(blob);
     });
   }
-  async downloadImageAsGrayscalePng(url: string, targetWidth?: number, targetHeight?: number): Promise<Uint8Array> {
-    const blob = await this.downloadImage(url);
+  async downloadImageAsGrayscalePng(source: string | Blob, targetWidth?: number, targetHeight?: number): Promise<Uint8Array> {
+    const blob = await this.downloadImage(source);
     const bitmap = await createImageBitmap(blob);
     let width = bitmap.width;
     let height = bitmap.height;

@@ -2,6 +2,7 @@ import { SpotifyApi, Track, Episode } from "@spotify/web-api-ts-sdk";
 import Song from '../model/songModel';
 import { downloadImageAsGrayscalePng } from "./imageModel";
 import { waitForEvenAppBridge } from '@evenrealities/even_hub_sdk';
+import placeholderArt from '../Assets/placeholder_art.jpg';
 
 let spotifysdk!: SpotifyApi;
 
@@ -109,7 +110,6 @@ async function initSpotify(): Promise<void> {
 export { initSpotify };
 
 class SpotifyModel {
-    ALBUM_ART_PATH = ('../src/assets/current_album_art.jpg');
     REDIRECT_URI = `${window.location.origin}/`;
     CLIENT_ID = '29a961338df9480db3c1b50e10df184f';
     SCOPE = ['user-modify-playback-state', 'user-read-playback-state'];
@@ -120,6 +120,8 @@ class SpotifyModel {
     imageIndex = 1;
     deviceId = "";
 
+    placeholder_duration = 0;
+
     async fetchCurrentTrack(): Promise<Song> {
         let result;
         try {
@@ -128,8 +130,27 @@ class SpotifyModel {
                 this.deviceId = result.device.id;
             }
         } catch (err) {
-            console.error("Failed to fetch currently playing track:", err);
-            return new Song();
+            let placeholder_song = new Song()
+            placeholder_song.addTitle("Honestly");
+            placeholder_song.addArtist("THØRNS");
+            placeholder_song.addFeatures(["Kasane Teto"]);
+            placeholder_song.addAlbum("Honestly");
+            placeholder_song.addID("0");
+            placeholder_song.addProgressSeconds(this.placeholder_duration);
+            this.placeholder_duration += 2;
+            if (this.placeholder_duration > 210) {
+                this.placeholder_duration = 0;
+            }
+            placeholder_song.addDurationSeconds(210);
+            try {
+                placeholder_song.addArtRaw(await downloadImageAsGrayscalePng(placeholderArt, 100, 100));
+            } catch (e) {
+                console.error("Failed to load placeholder art:", e);
+                placeholder_song.addArtRaw(new Uint8Array());
+            }
+            placeholder_song.addisPlaying(true);
+            placeholder_song.addChangedState(false);
+            return placeholder_song;
         }
 
         // No item means nothing is playing.

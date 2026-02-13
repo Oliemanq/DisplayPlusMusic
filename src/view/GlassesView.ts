@@ -36,7 +36,7 @@ async function createView(songIn: Song) {
 
         const imageContainer = new ImageContainerProperty({
             xPosition: 0,
-            yPosition: 10,
+            yPosition: 13,
             width: 100,
             height: 100,
             containerID: 1,
@@ -61,12 +61,13 @@ async function createView(songIn: Song) {
             })
         })
 
+
         const songInfoText = songIn.title + "\n" + songIn.artist + "\n" + songIn.album;
         const songInfo = new TextContainerProperty({
             xPosition: 200,
             yPosition: 25,
             width: MAX_WIDTH - (200),
-            height: MAX_HEIGHT,
+            height: 90,
             borderRdaius: 6,
             borderWidth: 1,
             containerID: 3,
@@ -75,12 +76,14 @@ async function createView(songIn: Song) {
             isEventCapture: 0,
         });
 
-        const playbackBarText = formatTime(songIn.progressSeconds) + " / " + formatTime(songIn.durationSeconds);
+
+        const playbackBarText = formatTime(songIn.progressSeconds) + " / " + formatTime(songIn.durationSeconds) + "\n" + songIn.createPlaybackBar(MAX_WIDTH);
+        // const playbackBarText = "<".repeat(57);
         const playbackBar = new TextContainerProperty({
             xPosition: 0,
-            yPosition: 120,
+            yPosition: 130,
             width: MAX_WIDTH,
-            height: 50,
+            height: 80,
             borderRdaius: 6,
             borderWidth: 1,
             containerID: 4,

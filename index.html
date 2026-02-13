@@ -17,55 +17,100 @@
         import spotifyPresenter from './src/presenter/spotifyPresenter.ts';
         import { createView } from './src/view/GlassesView.ts';
 
-        document.getElementById('display-on-glasses').addEventListener('click', () => {
-            createView();
+        document.getElementById('skip-track').addEventListener('click', () => {
+            spotifyPresenter.song_forward();
+        })
+        document.getElementById('play-pause').addEventListener('click', () => {
+            spotifyPresenter.song_pauseplay();
+        })
+        document.getElementById('previous-track').addEventListener('click', () => {
+            spotifyPresenter.song_back();
         })
     </script>
     <span id="album-art-container" class="container">
         <img id="album-art" />
+        <span id="song-info-container" class="subcontainer">
+            <p id="song-name" class="song-info"></p>
+            <p id="song-artist" class="song-info"></p>
+            <p id="song-album" class="song-info"></p>
+        </span>
     </span>
-    <span id="track-info" class="container">
-        <button id="refresh-fetch">Fetch refresh token</button>
-        <p id="track-name" class="info"></p>
-        <p id="artist-name" class="info"></p>
-        <p id="album-name" class="info"></p>
-        <p id="track-progress" class="info"></p>
-        <p id="track-duration" class="info"></p>
-        <p id="paused-state" class="info"></p>
-        <button id="display-on-glasses">Display on glasses</button>
+    <span id="buttons-container" class="container">
+        <button class="button" id="previous-track">Previous track</button>
+        <button class="button" id="play-pause">Play/Pause</button>
+        <button class="button" id="skip-track">Skip track</button>
+
     </span>
 
     <style>
-        .container {
-            margin-top: 20px;
-            background-color: #f0f0f0;
-            padding: 10px;
-            border-radius: 10px;
+        :root {
+            /*gray*/
+            --background: rgba(238, 238, 238, 1.0);
+            /*lighter white*/
+            --button-foreground: rgba(255, 255, 255, 1.0);
+            /*darker gray, background of slider*/
+            --button-background: rgba(228, 228, 228, 1.0);
+            --text: rgba(0, 0, 0, 1.0);
+        }
+
+        body {
+            background: var(--background);
+            font-family: "Inter", "sans-serif";
+            color: var(--text);
+        }
+
+
+
+        #album-art-container {
+            margin: 12px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background-color: var(--button-foreground);
+        }
+
+        #buttons-container {
+            display: flex;
+            margin: 12px;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 24px;
+            gap: 12px;
+        }
+
+        .subcontainer {
+            padding: 0px;
+            gap: 5px;
+            padding-left: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
         }
 
 
 
-        #fetchTrackButton,
-        #display-on-glasses,
-        #refresh-fetch {
-            background-color: #000;
-            color: #fff;
+        .button {
+            background-color: var(--button-foreground);
+            color: var(--text);
             border: none;
-            padding: 10px;
-            border-radius: 5px;
+            border-radius: 6px;
             cursor: pointer;
+            height: 35vw;
+            flex: 1;
+            font-size: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .info {
-            color: #000;
-            background-color: limegreen;
-            padding: 5px;
-            border-radius: 5px;
+
+        .song-info {
+            margin: 10px;
         }
     </style>
 </body>

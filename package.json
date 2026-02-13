@@ -15,11 +15,12 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "dev": "vite",
+    "dev": "evenhub qr -i 100.100.65.95 -p 5173 && evenhub qr -i 10.140.189.138 -p 5173 &&  vite",
     "build": "vite build",
     "preview": "vite preview",
     "pack": "npm run build && evenhub pack app.json dist",
-    "qr": "evenhub qr -i 100.120.181.28 -p 5173"
+    "qr": "evenhub qr -p 5173",
+    "sim": "evenhub-simulator localhost:5173 && vite"
   },
   "dependencies": {
     "@evenrealities/even_hub_sdk": "^0.0.7",

@@ -10,8 +10,6 @@ class Song {
     progressSeconds: number;
     durationSeconds: number;
 
-    albumArt: Blob
-    albumArtBase64: string
     albumArtRaw: Uint8Array
 
     isPlaying: Boolean
@@ -27,8 +25,6 @@ class Song {
         this.progressSeconds = 0;
         this.durationSeconds = 0;
 
-        this.albumArt = new Blob();
-        this.albumArtBase64 = '';
         this.albumArtRaw = new Uint8Array();
 
         this.isPlaying = false;
@@ -55,12 +51,6 @@ class Song {
     }
     addDurationSeconds(newDurationSeconds: number) {
         this.durationSeconds = newDurationSeconds;
-    }
-    addArt(newArt: Blob) {
-        this.albumArt = newArt;
-    }
-    addArtBase64(newArtBase64: string) {
-        this.albumArtBase64 = newArtBase64;
     }
     addArtRaw(newArt: Uint8Array) {
         this.albumArtRaw = newArt;

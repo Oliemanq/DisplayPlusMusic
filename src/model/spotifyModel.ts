@@ -1,6 +1,6 @@
 import { SpotifyApi, Track, Episode } from "@spotify/web-api-ts-sdk";
 import Song from '../model/songModel';
-import { downloadImage, downloadImageAsBase64, downloadImageAsGrayscalePng } from "./imageModel";
+import { downloadImageAsGrayscalePng } from "./imageModel";
 import { waitForEvenAppBridge } from '@evenrealities/even_hub_sdk';
 
 let spotifysdk!: SpotifyApi;
@@ -13,8 +13,6 @@ async function initSpotify(): Promise<void> {
         return;
     }
 
-    // PASTE YOUR REFRESH TOKEN HERE
-    // PASTE YOUR REFRESH TOKEN HERE
     const HARDCODED_REFRESH_TOKEN = "AQBikJeJAlUiFwAxcN8iXg8IhCqAx9fjgqR4PRIJ6vzTYXdb90JcczSJAG906aWue_44URnkyWOS0Vqjw2TiMAu0bi8qrEhDwhYPL1YwhV0HuC6d5aSEeI1FZN7m2gIXOtk";
 
     // Logic to resolve which token to use
@@ -120,11 +118,15 @@ class SpotifyModel {
     lastSong = new Song();
 
     imageIndex = 1;
+    deviceId = "";
 
     async fetchCurrentTrack(): Promise<Song> {
         let result;
         try {
             result = await spotifysdk.player.getCurrentlyPlayingTrack();
+            if (result && result.device && result.device.id) {
+                this.deviceId = result.device.id;
+            }
         } catch (err) {
             console.error("Failed to fetch currently playing track:", err);
             return new Song();
@@ -152,15 +154,13 @@ class SpotifyModel {
                 newSong.addAlbum(track.album.name);
                 newSong.addDurationSeconds(track.duration_ms / 1000);
                 newSong.addProgressSeconds(result.progress_ms / 1000);
-                newSong.addArt(await this.fetchAlbumArt(track));
-                newSong.addArtBase64(await this.fetchAlbumArtBase64(track));
                 newSong.addArtRaw(await this.fetchAlbumArtPng(track));
 
                 newSong.addChangedState(true);
 
                 if (newSong.isPlaying) {
                     console.log(
-                        `Updated playing song\n  - ${newSong.title} by ${newSong.artist}` +
+                        `Updated playing song\n  - ${newSong.title} by ${newSong.artist}\n\n` +
                         (newSong.features.length ? `, featuring ${newSong.features.join(", ")}` : "")
                     );
                 } else {
@@ -215,41 +215,6 @@ class SpotifyModel {
         return new Song();
     }
 
-    async fetchAlbumArt(track: Track): Promise<Blob> {
-        let images = track.album.images;
-
-        if (images.length > 1) {
-            const imageUrl = images[this.imageIndex].url;
-            console.log("Fetched image " + this.imageIndex + ", height is " + images[this.imageIndex].height + " and the width is " + images[this.imageIndex].width);
-            let art = await downloadImage(imageUrl);
-
-            const imgElement = document.getElementById('album-art') as HTMLImageElement;
-            if (imgElement) {
-                imgElement.src = URL.createObjectURL(art);
-            }
-            return art;
-        }
-        console.log("Track is not a song and doesn't have art. Returning blank")
-        return new Blob();
-    }
-    async fetchAlbumArtBase64(track: Track): Promise<string> {
-        let images = track.album.images;
-
-        if (images.length > 1) {
-            const imageUrl = images[this.imageIndex].url;
-
-            console.log("Found image, returning blob")
-            let art = await downloadImageAsBase64(imageUrl);
-
-            const imgElement = document.getElementById('album-art') as HTMLImageElement;
-            if (imgElement) {
-                imgElement.src = art;
-            }
-            return art;
-        }
-        console.log("Track is not a song and doesn't have art. Returning blank")
-        return "";
-    }
     async fetchAlbumArtPng(track: Track): Promise<Uint8Array> {
         let images = track.album.images;
 
@@ -259,6 +224,35 @@ class SpotifyModel {
             return art;
         }
         return new Uint8Array();
+    }
+
+    async song_Pause() {
+        try {
+            let state = await spotifysdk.player.getPlaybackState();
+            if (state.is_playing) {
+                await spotifysdk.player.pausePlayback(this.deviceId);
+            } else {
+                await spotifysdk.player.startResumePlayback(this.deviceId);
+            }
+        } catch (e) {
+            console.error("Failed to pause playback:", e);
+        }
+    }
+
+    async song_Back() {
+        try {
+            await spotifysdk.player.skipToPrevious(this.deviceId);
+        } catch (e) {
+            console.error("Failed to skip to previous track:", e);
+        }
+    }
+
+    async song_Forward() {
+        try {
+            await spotifysdk.player.skipToNext(this.deviceId);
+        } catch (e) {
+            console.error("Failed to skip to next track:", e);
+        }
     }
 }
 

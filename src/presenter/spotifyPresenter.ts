@@ -70,6 +70,16 @@ class SpotifyPresenter {
             imgElement.src = URL.createObjectURL(blob);
         }
     }
+
+    song_pauseplay() {
+        spotifyModel.song_Pause();
+    }
+    song_back() {
+        spotifyModel.song_Back();
+    }
+    song_forward() {
+        spotifyModel.song_Forward();
+    }
 }
 
 const spotifyPresenter = new SpotifyPresenter();

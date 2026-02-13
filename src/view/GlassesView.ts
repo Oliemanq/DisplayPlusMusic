@@ -6,6 +6,8 @@ import {
     ImageRawDataUpdate,
     RebuildPageContainer,
     TextContainerUpgrade,
+    ListContainerProperty,
+    ListItemContainerProperty,
 
 } from '@evenrealities/even_hub_sdk';
 
@@ -15,7 +17,7 @@ import Song from '../model/songModel';
 // State management variables
 let isPageCreated = false;
 let isUpdating = false;
-let lastImageRaw: Uint8Array | undefined = undefined;
+let lastSongID: string = "";
 let lastConfig: string = "";
 let MAX_HEIGHT = 288;
 let MAX_WIDTH = 576
@@ -34,30 +36,63 @@ async function createView(songIn: Song) {
 
         const imageContainer = new ImageContainerProperty({
             xPosition: 0,
-            yPosition: 0,
+            yPosition: 10,
             width: 100,
             height: 100,
-            containerID: 3,
+            containerID: 1,
             containerName: 'album-art',
         });
 
-        const text = songIn.title + " - " + songIn.artist + "\n" + formatTime(songIn.progressSeconds) + " > " + formatTime(songIn.durationSeconds);
-        const textContainer = new TextContainerProperty({
-            xPosition: 0,
-            yPosition: 110,
-            width: 300,
+        const buttons = new ListContainerProperty({
+            xPosition: 110,
+            yPosition: 0,
+            width: 52,
+            height: 130,
+            borderWidth: 0,
+            borderRdaius: 0,
+            containerID: 2,
+            containerName: 'buttons',
+            isEventCapture: 1,
+            itemContainer: new ListItemContainerProperty({
+                itemCount: 3,
+                itemWidth: 52,
+                itemName: ["  < ", "  || ", "  > "],
+                isItemSelectBorderEn: 1
+            })
+        })
+
+        const songInfoText = songIn.title + "\n" + songIn.artist + "\n" + songIn.album;
+        const songInfo = new TextContainerProperty({
+            xPosition: 200,
+            yPosition: 25,
+            width: MAX_WIDTH - (200),
             height: MAX_HEIGHT,
             borderRdaius: 6,
             borderWidth: 1,
-            containerID: 1,
-            containerName: 'text-1',
-            content: text,
-            isEventCapture: 1,
+            containerID: 3,
+            containerName: 'songInfo',
+            content: songInfoText,
+            isEventCapture: 0,
         });
 
+        const playbackBarText = formatTime(songIn.progressSeconds) + " / " + formatTime(songIn.durationSeconds);
+        const playbackBar = new TextContainerProperty({
+            xPosition: 0,
+            yPosition: 120,
+            width: MAX_WIDTH,
+            height: 50,
+            borderRdaius: 6,
+            borderWidth: 1,
+            containerID: 4,
+            containerName: 'playbackBar',
+            content: playbackBarText,
+            isEventCapture: 0,
+        })
+
         const containerConfig = {
-            containerTotalNum: 2,
-            textObject: [textContainer],
+            containerTotalNum: 4,
+            textObject: [songInfo, playbackBar],
+            listObject: [buttons],
             imageObject: [imageContainer],
         };
 
@@ -86,7 +121,6 @@ async function createView(songIn: Song) {
         }
 
         // If page is created (or existed), rebuild/update it.
-        // If page is created (or existed), rebuild/update it.
         if (isPageCreated) {
             // Create a layout-only config for comparison (exclude dynamic content)
             const layoutConfig = {
@@ -106,29 +140,33 @@ async function createView(songIn: Song) {
                 // This avoids clearing the screen/image
                 try {
                     const upgrade = new TextContainerUpgrade({
-                        containerID: 1,
-                        containerName: 'text-1',
-                        content: text,
+                        containerID: 3,
+                        containerName: 'songInfo',
+                        content: songInfoText,
                     });
                     await bridge.textContainerUpgrade(upgrade);
+
+                    const upgrade2 = new TextContainerUpgrade({
+                        containerID: 4,
+                        containerName: 'playbackBar',
+                        content: playbackBarText,
+                    })
+                    await bridge.textContainerUpgrade(upgrade2);
+
                 } catch (e) {
                     console.error("Failed to upgrade text container:", e);
                 }
             }
-
-            console.log("Checking image update. Raw length:", songIn.albumArtRaw?.length, "Last length:", lastImageRaw?.length);
-
             // Only update image if it has changed
-            if (songIn.albumArtRaw && songIn.albumArtRaw.length > 0 && songIn.albumArtRaw !== lastImageRaw) {
+            if (songIn.albumArtRaw && songIn.albumArtRaw.length > 0 && songIn.songID !== lastSongID) {
                 try {
-                    console.log("Updating image container due to change")
                     await bridge.updateImageRawData(new ImageRawDataUpdate({
-                        containerID: 3,
+                        containerID: 1,
                         containerName: 'album-art',
                         imageData: Array.from(songIn.albumArtRaw),
                     }));
                     console.log("Image data updated successfully");
-                    lastImageRaw = songIn.albumArtRaw;
+                    lastSongID = songIn.songID;
                 } catch (e) {
                     console.error("Failed to update image data:", e);
                 }

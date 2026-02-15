@@ -1,5 +1,6 @@
 import { initSpotify } from './model/spotifyModel';
 import spotifyPresenter from './presenter/spotifyPresenter';
+import { eventHandler } from './presenter/eventPresenter';
 import { enableMobileConsole } from './Scripts/debugConsole';
 
 async function main() {
@@ -8,6 +9,7 @@ async function main() {
     await initSpotify();
 
     spotifyPresenter.startPolling();
+    eventHandler();
 }
 
 main();

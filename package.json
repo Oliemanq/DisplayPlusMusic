@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@evenrealities/even_hub_sdk": "^0.0.7",
+    "@evenrealities/evenhub-simulator": "^0.1.2",
     "@spotify/web-api-ts-sdk": "^1.2.0",
     "fs": "^0.0.1-security",
     "stream": "^0.0.3"

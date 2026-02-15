@@ -420,3 +420,4 @@ FodyWeavers.xsd
 *.msm
 *.msp
 src/model/imageModel.ts
+src/vite-env.d.ts

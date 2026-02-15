@@ -14,7 +14,7 @@ async function initSpotify(): Promise<void> {
         return;
     }
 
-    const HARDCODED_REFRESH_TOKEN = "AQBikJeJAlUiFwAxcN8iXg8IhCqAx9fjgqR4PRIJ6vzTYXdb90JcczSJAG906aWue_44URnkyWOS0Vqjw2TiMAu0bi8qrEhDwhYPL1YwhV0HuC6d5aSEeI1FZN7m2gIXOtk";
+    const HARDCODED_REFRESH_TOKEN = import.meta.env.VITE_SPOTIFY_REFRESH_TOKEN;
 
     // Logic to resolve which token to use
     let refreshTokenToUse = HARDCODED_REFRESH_TOKEN;
@@ -111,7 +111,7 @@ export { initSpotify };
 
 class SpotifyModel {
     REDIRECT_URI = `${window.location.origin}/`;
-    CLIENT_ID = '29a961338df9480db3c1b50e10df184f';
+    CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENTID;
     SCOPE = ['user-modify-playback-state', 'user-read-playback-state'];
 
     currentSong = new Song();

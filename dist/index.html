@@ -6,7 +6,7 @@
     <title>Even Realities App</title>
     <meta http-equiv="Content-Security-Policy"
         content="script-src 'self' 'unsafe-inline' https://accounts.scdn.co https://sdk.scdn.co blob:; worker-src 'self' blob:;" />
-  <script type="module" crossorigin src="/assets/index-Ckzn1lUH.js"></script>
+  <script type="module" crossorigin src="/assets/index-rjwnw0ej.js"></script>
 </head>
 
 <body>
@@ -15,48 +15,133 @@
 
     <span id="album-art-container" class="container">
         <img id="album-art" />
+        <span id="song-info-container" class="subcontainer">
+            <p id="song-name" class="song-info"></p>
+            <p id="song-artist" class="song-info"></p>
+            <p id="song-album" class="song-info"></p>
+        </span>
     </span>
-    <span id="track-info" class="container">
-        <button id="fetchTrackButton">Fetch Current Track</button>
-        <p id="track-name" class="info"></p>
-        <p id="artist-name" class="info"></p>
-        <p id="album-name" class="info"></p>
-        <p id="track-progress" class="info"></p>
-        <p id="track-duration" class="info"></p>
-        <p id="paused-state" class="info"></p>
-        <button id="display-on-glasses">Display on glasses</button>
+    <span id="buttons-container" class="container">
+        <button class="button" id="previous-track">Previous track</button>
+        <button class="button" id="play-pause">Play/Pause</button>
+        <button class="button" id="skip-track">Skip track</button>
+
+
     </span>
 
+    <button class="button" id="toggle-popup">Settings</button>
+
+    <div id="popup">
+        <p class="title">Spotify Auth required</p>
+        <button class="small-button" id="open-login-page">
+            Open login page
+        </button>
+        <p>Missing spotify login session, after opening login page and authorizing the app, copy the refresh token
+            provided into the field and hit 'save'</p>
+        <input type="text" id="refresh-token" placeholder="Refresh Token">
+        <button class="small-button" id="save-refresh-token">Save</button>
+    </div>
+
     <style>
-        .container {
-            margin-top: 20px;
-            background-color: #f0f0f0;
-            padding: 10px;
-            border-radius: 10px;
+        :root {
+            /*gray*/
+            --background: rgba(238, 238, 238, 1.0);
+            /*lighter white*/
+            --button-foreground: rgba(255, 255, 255, 1.0);
+            --button-foreground-alt: rgb(35, 35, 35);
+            /*darker gray, background of slider*/
+            --button-background: rgba(228, 228, 228, 1.0);
+            --text: rgba(35, 35, 35, 1.0);
+            --text-alt: rgba(255, 255, 255, 1.0);
+        }
+
+        body {
+            background: var(--background);
+            font-family: "Inter", "sans-serif";
+            color: var(--text);
+        }
+
+        #popup {
+            /*display: none;*/
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--button-foreground);
+            padding: 20px;
+            border: 1px solid var(--button-background);
+            border-radius: 8px;
+            z-index: 1000;
+        }
+
+
+
+        #album-art-container {
+            margin: 12px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background-color: var(--button-foreground);
+        }
+
+        #buttons-container {
+            display: flex;
+            margin: 12px;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 24px;
+            gap: 12px;
+        }
+
+        .subcontainer {
+            padding: 0px;
+            gap: 5px;
+            padding-left: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
         }
 
 
 
-        #fetchTrackButton,
-        #display-on-glasses {
-            background-color: #000;
-            color: #fff;
+        .button {
+            background-color: var(--button-foreground);
+            color: var(--text);
             border: none;
-            padding: 10px;
-            border-radius: 5px;
+            border-radius: 6px;
             cursor: pointer;
+            height: 35vw;
+            flex: 1;
+            font-size: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .info {
-            color: #000;
-            background-color: limegreen;
-            padding: 5px;
-            border-radius: 5px;
+        .small-button {
+            background-color: var(--button-foreground-alt);
+            padding: 16px;
+            color: var(--text-alt);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            height: 12px;
+            width: 95%;
+            flex: 1;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+
+        .song-info {
+            margin: 10px;
         }
     </style>
 </body>

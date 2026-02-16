@@ -1,7 +1,8 @@
-import spotifyModel from '../model/spotifyModel';
+import spotifyModel, { initSpotify } from '../model/spotifyModel';
 import Song from '../model/songModel';
 import { formatTime } from '../Scripts/formatTime';
 import { createView } from '../view/GlassesView';
+import { waitForEvenAppBridge } from '@evenrealities/even_hub_sdk';
 
 class SpotifyPresenter {
     constructor() {
@@ -66,6 +67,14 @@ class SpotifyPresenter {
             const blob = new Blob([song.albumArtRaw] as BlobPart[], { type: 'image/png' });
             imgElement.src = URL.createObjectURL(blob);
         }
+    }
+
+    async startAuth(tokenIn: string) {
+        const bridge = await waitForEvenAppBridge();
+
+        bridge.setLocalStorage('spotify_refresh_token', tokenIn);
+
+        initSpotify();
     }
 
     song_pauseplay() {

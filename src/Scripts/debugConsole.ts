@@ -46,11 +46,11 @@ export function enableMobileConsole() {
         originalError(...args);
         args.forEach(arg => logToScreen(arg, '#f00')); // Red for errors
     };
-    const originalWarn = console.warn;
-    console.warn = (...args) => {
-        originalWarn(...args);
-        args.forEach(arg => logToScreen(arg, '#ff0')); // Yellow for warnings
-    };
+    // const originalWarn = console.warn;
+    // console.warn = (...args) => {
+    //     originalWarn(...args);
+    //     args.forEach(arg => logToScreen(arg, '#ff0')); // Yellow for warnings
+    // };
 
     console.log("Mobile console enabled.");
 }

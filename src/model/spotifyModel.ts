@@ -1,40 +1,51 @@
 import { SpotifyApi, Track, Episode } from "@spotify/web-api-ts-sdk";
 import Song from '../model/songModel';
 import { downloadImageAsGrayscalePng } from "./imageModel";
-import { waitForEvenAppBridge } from '@evenrealities/even_hub_sdk';
+import { storage } from '../utils/storage';
+import { generateRefreshToken, checkForAuthCode } from '../Scripts/get_refresh_token';
 import placeholderArt from '../Assets/placeholder_art.jpg';
 
 let spotifysdk!: SpotifyApi;
 
 async function initSpotify(): Promise<void> {
-    // Check for localhost to prevent consuming the token on the PC
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        console.log("Running on PC. Skipping Auth to preserve Refresh Token for mobile.");
-        alert("Skipping Auth on PC to save token for phone. Open on Mobile!");
-        return;
-    }
-
     const HARDCODED_REFRESH_TOKEN = import.meta.env.VITE_SPOTIFY_REFRESH_TOKEN;
 
+    // Check if we are returning from an auth redirect
+    const codeRefreshToken = await checkForAuthCode();
+
     // Logic to resolve which token to use
-    let refreshTokenToUse = HARDCODED_REFRESH_TOKEN;
+    let refreshTokenToUse = codeRefreshToken || HARDCODED_REFRESH_TOKEN;
     let usingStoredToken = false;
 
-    try {
-        const bridge = await waitForEvenAppBridge();
-        const storedToken = await bridge.getLocalStorage("spotify_refresh_token");
-        if (storedToken && storedToken.length > 20 && storedToken !== "PASTE_YOUR_REFRESH_TOKEN_HERE") {
-            console.log("Found stored refresh token, attempting to use it.");
-            refreshTokenToUse = storedToken;
+    // If we got a new token from the code exchange, save it immediately
+    if (codeRefreshToken) {
+        console.log("New Refresh Token obtained from code exchange!", codeRefreshToken);
+        // Show in UI
+        (document.getElementById('refresh-token') as HTMLInputElement).value = codeRefreshToken;
+
+        try {
+            await storage.setItem("spotify_refresh_token", codeRefreshToken);
             usingStoredToken = true;
+        } catch (e) {
+            console.error("Failed to persist new token:", e);
         }
-    } catch (e) {
-        console.error("Error accessing bridge storage:", e);
+    } else {
+        // Try to load from storage if we didn't just get one
+        try {
+            const storedToken = await storage.getItem("spotify_refresh_token");
+            if (storedToken && storedToken.length > 20 && storedToken !== "PASTE_YOUR_REFRESH_TOKEN_HERE") {
+                console.log("Found stored refresh token, attempting to use it.");
+                refreshTokenToUse = storedToken;
+                usingStoredToken = true;
+            }
+        } catch (e) {
+            console.error("Error accessing bridge storage:", e);
+        }
     }
 
     if (refreshTokenToUse === "PASTE_YOUR_REFRESH_TOKEN_HERE") {
         console.error("No Refresh Token provided!");
-        alert("Setup Required: Valid Refresh Token missing.");
+        //alert("Setup Required: Valid Refresh Token missing.");
         return;
     }
 
@@ -82,8 +93,7 @@ async function initSpotify(): Promise<void> {
 
         if (newRefreshToken) {
             try {
-                const bridge = await waitForEvenAppBridge();
-                await bridge.setLocalStorage("spotify_refresh_token", newRefreshToken);
+                await storage.setItem("spotify_refresh_token", newRefreshToken);
                 console.log("Refreshed token persisted to storage.");
             } catch (e) {
                 console.error("Failed to persist token:", e);
@@ -104,7 +114,11 @@ async function initSpotify(): Promise<void> {
 
     } catch (e: any) {
         console.error("Critical Auth Error:", e);
-        alert("Authentication Failed. Please check your internet or regenerate the token.");
+        const popup = document.getElementById('spotify-auth-popup');
+        if (popup) {
+            popup.style.display = 'flex';
+        }
+        //alert("Authentication Failed. Please check your internet or regenerate the token.");
     }
 }
 export { initSpotify };

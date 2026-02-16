@@ -15,7 +15,9 @@
 
     <script type="module">
         import spotifyPresenter from './src/presenter/spotifyPresenter.ts';
-        import { createView } from './src/view/GlassesView.ts';
+        import { storage } from './src/utils/storage';
+        import { generateRefreshToken, checkForAuthCode, exchangeCodeForToken } from './src/Scripts/get_refresh_token';
+        import { initSpotify } from './src/model/spotifyModel';
 
         document.getElementById('skip-track').addEventListener('click', () => {
             spotifyPresenter.song_forward();
@@ -25,6 +27,30 @@
         })
         document.getElementById('previous-track').addEventListener('click', () => {
             spotifyPresenter.song_back();
+        })
+
+        document.getElementById('open-login-page').addEventListener('click', async () => {
+            generateRefreshToken();
+        })
+        document.getElementById('check-local-refresh-token').addEventListener('click', async () => {
+            alert(await storage.getItem('spotify_refresh_token'));
+        })
+        document.getElementById('save-refresh-token').addEventListener('click', async () => {
+            const inputVal = document.getElementById('refresh-token').value;
+            console.log("Attempting to save/exchange token...");
+
+            const newToken = await exchangeCodeForToken(inputVal);
+            if (newToken) {
+                console.log("Exchanged code for refresh token successfully.");
+                await storage.setItem('spotify_refresh_token', newToken);
+                alert("Token exchanged and saved! Reloading...");
+                window.location.reload();
+            } else {
+                console.log("Not a valid code or exchange failed. Assuming it is a refresh token.");
+                await storage.setItem('spotify_refresh_token', inputVal);
+                alert("Refresh token saved! Reloading...");
+                window.location.reload();
+            }
         })
     </script>
     <span id="album-art-container" class="container">
@@ -40,7 +66,22 @@
         <button class="button" id="play-pause">Play/Pause</button>
         <button class="button" id="skip-track">Skip track</button>
 
+
     </span>
+
+    <button class="button" id="toggle-popup">Settings</button>
+
+    <div id="spotify-auth-popup" class="popup">
+        <p class="title">Spotify Auth required</p>
+        <button class="small-button" id="open-login-page">
+            Open login page
+        </button>
+        <p>Missing spotify login session, after opening login page and authorizing the app, copy the refresh token
+            provided into the field and hit 'save'</p>
+        <input type="text" id="refresh-token" placeholder="Refresh Token">
+        <button class="small-button" id="save-refresh-token">Save</button>
+        <button class="small-button" id="check-local-refresh-token">Check local storage</button>
+    </div>
 
     <style>
         :root {
@@ -48,15 +89,32 @@
             --background: rgba(238, 238, 238, 1.0);
             /*lighter white*/
             --button-foreground: rgba(255, 255, 255, 1.0);
+            --button-foreground-alt: rgb(35, 35, 35);
             /*darker gray, background of slider*/
             --button-background: rgba(228, 228, 228, 1.0);
-            --text: rgba(0, 0, 0, 1.0);
+            --text: rgba(35, 35, 35, 1.0);
+            --text-alt: rgba(255, 255, 255, 1.0);
+
+            --accent: rgb(254, 249, 145);
         }
 
         body {
             background: var(--background);
             font-family: "Inter", "sans-serif";
             color: var(--text);
+        }
+
+        #popup {
+            /*display: none;*/
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--button-foreground);
+            padding: 20px;
+            border: 1px solid var(--button-background);
+            border-radius: 8px;
+            z-index: 1000;
         }
 
 
@@ -106,6 +164,28 @@
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        .small-button {
+            background-color: var(--button-foreground-alt);
+            padding: 16px;
+            margin: 6px;
+            color: var(--text-alt);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            height: 12px;
+            width: 95%;
+            flex: 1;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #save-refresh-token {
+            background-color: var(--accent);
+            color: var(--text)
         }
 
 

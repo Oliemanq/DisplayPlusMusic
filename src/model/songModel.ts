@@ -88,14 +88,9 @@ class Song {
 
         let dashCount = Math.floor(maxDashCount * (maxWidthTrue / maxWidth));
         let underscoreCount = Math.floor(maxUnderscoreCount * (maxWidthTrue / maxWidth));
-
-        console.log("        Max Dashes: " + dashCount + ", Max Underscores: " + underscoreCount)
-
         while ((dashCount * dashWidth) + (underscoreCount * underscoreWidth) > maxWidthTrue) {
             dashCount -= 1;
         }
-        console.log("Post trimming, Dashes: " + dashCount + ", Underscores: " + underscoreCount)
-
         return "<" + "-".repeat(dashCount) + "|" + "_".repeat(underscoreCount) + ">";
     }
 }

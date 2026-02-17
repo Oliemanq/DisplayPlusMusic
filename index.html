@@ -53,6 +53,8 @@
             }
         })
     </script>
+
+    <!-- Main UI -->
     <span id="album-art-container" class="container">
         <img id="album-art" />
         <span id="song-info-container" class="subcontainer">
@@ -65,35 +67,53 @@
         <button class="button" id="previous-track">Previous track</button>
         <button class="button" id="play-pause">Play/Pause</button>
         <button class="button" id="skip-track">Skip track</button>
-
-
     </span>
 
-    <button class="button" id="toggle-popup">Settings</button>
-
+    <!-- Popup for spotify Auth -->
     <div id="spotify-auth-popup" class="popup">
-        <p class="title">Spotify Auth required</p>
+        <p class="popup-title">
+            Spotify Auth required
+        </p>
+        <p class="popup-label">
+            Missing spotify login session, after opening login page and authorizing the app, copy the refresh token
+            provided into the field and hit 'save'
+        </p>
+
         <button class="small-button" id="open-login-page">
             Open login page
         </button>
-        <p>Missing spotify login session, after opening login page and authorizing the app, copy the refresh token
-            provided into the field and hit 'save'</p>
-        <input type="text" id="refresh-token" placeholder="Refresh Token">
+
+        <span id="spacer"></span>
+
+        <input class="popup-input" id="refresh-token" placeholder="Refresh Token">
         <button class="small-button" id="save-refresh-token">Save</button>
         <button class="small-button" id="check-local-refresh-token">Check local storage</button>
     </div>
 
     <style>
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+
+            to {
+                transform: translateY(0%);
+            }
+        }
+
         :root {
             /*gray*/
             --background: rgba(238, 238, 238, 1.0);
-            /*lighter white*/
+
             --button-foreground: rgba(255, 255, 255, 1.0);
             --button-foreground-alt: rgb(35, 35, 35);
-            /*darker gray, background of slider*/
+
             --button-background: rgba(228, 228, 228, 1.0);
+
             --text: rgba(35, 35, 35, 1.0);
             --text-alt: rgba(255, 255, 255, 1.0);
+
+            --text-field-background: rgba(35, 35, 35, 0.08);
 
             --accent: rgb(254, 249, 145);
         }
@@ -104,20 +124,76 @@
             color: var(--text);
         }
 
-        #popup {
-            /*display: none;*/
+        .popup {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--button-foreground);
-            padding: 20px;
-            border: 1px solid var(--button-background);
-            border-radius: 8px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            top: auto;
+            overflow-y: auto;
+            overflow-x: hidden;
+
+
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 85vh;
+            padding: 24px 24px 80px 24px;
             z-index: 1000;
+
+            border-radius: 6px 6px 0 0;
+            font-size: 40px;
+
+            background: var(--background);
+            box-shadow: 0 0 0 1000vw rgba(0, 0, 0, 0.5);
+
+            transform: translateY(100%);
+            animation: slideUp 0.6s cubic-bezier(0.32, 0.72, 0, 1) forwards;
         }
 
+        .popup-label {
+            text-align: center;
+            flex-direction: column;
 
+            width: 100%;
+            margin-left: 6px;
+            margin-right: 6px;
+            padding-top: 12px;
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+
+            background: var(--button-foreground);
+            border-radius: 6px;
+            font-size: 40px;
+        }
+
+        .popup-input {
+            /* Match button profile */
+            display: block;
+            box-sizing: border-box;
+            width: calc(100% - 12px);
+            height: 96px;
+            padding: 0 16px;
+            /* Match button padding */
+
+            margin-left: 6px;
+            margin-right: 6px;
+            margin-bottom: 64px;
+
+            background: var(--text-field-background);
+            color: var(--text);
+            border: none;
+            outline: none;
+            border-radius: 6px;
+            font-size: 40px;
+            text-align: center;
+        }
+
+        #spacer {
+            height: 100%;
+            flex: 1;
+        }
 
         #album-art-container {
             margin: 12px;
@@ -153,34 +229,37 @@
 
 
         .button {
-            background-color: var(--button-foreground);
-            color: var(--text);
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            height: 35vw;
-            flex: 1;
-            font-size: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
+            border: none;
+            cursor: pointer;
+
+            border-radius: 6px;
+            height: 35vh;
+            font-size: 36px;
+            flex: 1;
+
+            background-color: var(--button-foreground);
+            color: var(--text);
         }
 
         .small-button {
-            background-color: var(--button-foreground-alt);
-            padding: 16px;
-            margin: 6px;
-            color: var(--text-alt);
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            height: 12px;
-            width: 95%;
-            flex: 1;
-            font-size: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
+
+            padding: 16px;
+            width: 100%;
+            height: 96px;
+            margin-left: 6px;
+            margin-right: 6px;
+            margin-bottom: 6px;
+
+            font-size: 40px;
+            border-radius: 6px;
+            background-color: var(--button-foreground-alt);
+            color: var(--text-alt);
         }
 
         #save-refresh-token {

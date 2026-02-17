@@ -4,7 +4,7 @@ import { eventHandler } from './presenter/eventPresenter';
 import { enableMobileConsole } from './Scripts/debugConsole';
 
 async function main() {
-    enableMobileConsole();
+    //enableMobileConsole();
     console.log("App starting...");
     await initSpotify();
 

@@ -6,7 +6,7 @@
     <title>Even Realities App</title>
     <meta http-equiv="Content-Security-Policy"
         content="script-src 'self' 'unsafe-inline' https://accounts.scdn.co https://sdk.scdn.co blob:; worker-src 'self' blob:;" />
-  <script type="module" crossorigin src="/DisplayPlusMusic/assets/index-BpjccKp6.js"></script>
+  <script type="module" crossorigin src="/DisplayPlusMusic/assets/index-Cog9lEH-.js"></script>
 </head>
 
 <body>
@@ -43,20 +43,20 @@
             Spotify Auth required
         </p>
         <p class="popup-label">
-            Missing spotify login session, after opening login page and authorizing the app, copy the refresh token
-            provided into the field and hit 'save'
+            Click on 'Open login page' and authorize the app.<br>
+            From there, you need to copy the first "code": section, through to the last ".<br>
+            Hit the back arrow and paste the code in to 'Refresh Token' and hit save
         </p>
 
-        <button class="small-button" id="open-login-page">
+        <button class="small-button dark" id="open-login-page">
             Open login page
         </button>
-        <p id="login-page-link"></p>
+        <button class="small-button" id="copy-login-link">Copy Link</button>
 
         <span id="spacer"></span>
 
         <input class="popup-input" id="refresh-token" placeholder="Refresh Token">
-        <button class="small-button" id="save-refresh-token">Save</button>
-        <button class="small-button" id="check-local-refresh-token">Check local storage</button>
+        <button class="small-button accent" id="save-refresh-token">Save</button>
     </div>
 
     <style>
@@ -115,6 +115,7 @@
             height: 85vh;
             padding: 24px 24px 80px 24px;
             z-index: 1000;
+            gap: 12px;
 
             border-radius: 6px 6px 0 0;
             font-size: 40px;
@@ -153,7 +154,7 @@
 
             margin-left: 6px;
             margin-right: 6px;
-            margin-bottom: 64px;
+            margin-bottom: 12px;
 
             background: var(--text-field-background);
             color: var(--text);
@@ -243,6 +244,9 @@
             font-size: 40px;
             border-radius: 6px;
             border: rgba(0, 0, 0, 0);
+
+            background-color: var(--button-background-light);
+            color: var(--button-foreground-dark)
         }
 
         .small-button.dark {

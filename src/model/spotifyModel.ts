@@ -2,7 +2,7 @@ import { SpotifyApi, Track, Episode } from "@spotify/web-api-ts-sdk";
 import Song, { song_placeholder } from '../model/songModel';
 import { downloadImageAsGrayscalePng } from "./imageModel";
 import { storage } from '../utils/storage';
-import { generateRefreshToken, checkForAuthCode } from '../Scripts/get_refresh_token';
+import spotifyAuthModel from './spotifyAuthModel';
 import placeholderArt from '../Assets/placeholder_art.jpg';
 import { fetchLyrics } from "./lyricsModel";
 
@@ -12,7 +12,7 @@ async function initSpotify(): Promise<void> {
     const HARDCODED_REFRESH_TOKEN = import.meta.env.VITE_SPOTIFY_REFRESH_TOKEN;
 
     // Check if we are returning from an auth redirect
-    const codeRefreshToken = await checkForAuthCode();
+    const codeRefreshToken = await spotifyAuthModel.checkForAuthCode();
 
     // Logic to resolve which token to use
     let refreshTokenToUse = codeRefreshToken || HARDCODED_REFRESH_TOKEN;

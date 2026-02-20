@@ -16,7 +16,7 @@
     <script type="module">
         import spotifyPresenter from './src/presenter/spotifyPresenter.ts';
         import { storage } from './src/utils/storage';
-        import { generateRefreshToken, checkForAuthCode, exchangeCodeForToken } from './src/Scripts/get_refresh_token';
+        import spotifyAuthModel from './src/model/spotifyAuthModel.ts';
         import { initSpotify } from './src/model/spotifyModel';
 
         document.getElementById('skip-track').addEventListener('click', () => {
@@ -29,17 +29,46 @@
             spotifyPresenter.song_back();
         })
 
-        document.getElementById('open-login-page').addEventListener('click', async () => {
-            generateRefreshToken();
+        let generatedAuthUrl;
+        spotifyAuthModel.generateURL().then(url => {
+            generatedAuthUrl = url;
+        });
+
+        document.getElementById('open-login-page').addEventListener('click', () => {
+            if (generatedAuthUrl) {
+                spotifyAuthModel.generateRefreshToken(generatedAuthUrl);
+            }
         })
-        document.getElementById('check-local-refresh-token').addEventListener('click', async () => {
-            alert(await storage.getItem('spotify_refresh_token'));
+        document.getElementById('copy-login-link').addEventListener('click', async () => {
+            const linkText = document.getElementById('login-page-link').innerText;
+            if (!linkText) {
+                alert("No link to copy. Please click 'Open login page' first.");
+                return;
+            }
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(linkText);
+                    alert("Link copied to clipboard!");
+                } else {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = linkText;
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    alert("Link copied to clipboard!");
+                }
+            } catch (err) {
+                console.error("Failed to copy text: ", err);
+                alert("Failed to copy link.");
+            }
         })
         document.getElementById('save-refresh-token').addEventListener('click', async () => {
             const inputVal = document.getElementById('refresh-token').value;
             console.log("Attempting to save/exchange token...");
 
-            const newToken = await exchangeCodeForToken(inputVal);
+            const newToken = await spotifyAuthModel.exchangeCodeForToken(inputVal);
             if (newToken) {
                 console.log("Exchanged code for refresh token successfully.");
                 await storage.setItem('spotify_refresh_token', newToken);
@@ -94,20 +123,20 @@
             Spotify Auth required
         </p>
         <p class="popup-label">
-            Missing spotify login session, after opening login page and authorizing the app, copy the refresh token
-            provided into the field and hit 'save'
+            Click on 'Open login page' and authorize the app.<br><br>
+            From there, you need to copy the first "code": section, through to the last " mark.<br><br>
+            Hit the back arrow and paste the code in to 'Refresh Token' and hit save
         </p>
 
-        <button class="small-button" id="open-login-page">
+        <button class="small-button dark" id="open-login-page">
             Open login page
         </button>
-        <p id="login-page-link"></p>
+        <button class="small-button" id="copy-login-link">Copy Link</button>
 
         <span id="spacer"></span>
 
         <input class="popup-input" id="refresh-token" placeholder="Refresh Token">
-        <button class="small-button" id="save-refresh-token">Save</button>
-        <button class="small-button" id="check-local-refresh-token">Check local storage</button>
+        <button class="small-button accent" id="save-refresh-token">Save</button>
     </div>
 
     <style>
@@ -166,6 +195,7 @@
             height: 85vh;
             padding: 24px 24px 80px 24px;
             z-index: 1000;
+            gap: 12px;
 
             border-radius: 6px 6px 0 0;
             font-size: 40px;
@@ -204,7 +234,7 @@
 
             margin-left: 6px;
             margin-right: 6px;
-            margin-bottom: 64px;
+            margin-bottom: 12px;
 
             background: var(--text-field-background);
             color: var(--text);
@@ -294,6 +324,9 @@
             font-size: 40px;
             border-radius: 6px;
             border: rgba(0, 0, 0, 0);
+
+            background-color: var(--button-background-light);
+            color: var(--button-foreground-dark)
         }
 
         .small-button.dark {

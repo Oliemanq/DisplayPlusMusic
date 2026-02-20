@@ -95,4 +95,17 @@ class Song {
     }
 }
 
+let song_placeholder = new Song();
+song_placeholder.addTitle("Honestly");
+song_placeholder.addArtist("THØRNS");
+song_placeholder.addFeatures(["Kasane Teto"]);
+song_placeholder.addAlbum("Honestly");
+song_placeholder.addID("0");
+song_placeholder.addProgressSeconds(0);
+song_placeholder.addDurationSeconds(0);
+song_placeholder.addArtRaw(new Uint8Array());
+song_placeholder.addisPlaying(false);
+song_placeholder.addChangedState(false);
+
+export { song_placeholder };
 export default Song;

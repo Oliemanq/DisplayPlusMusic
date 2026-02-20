@@ -1,9 +1,10 @@
 import { SpotifyApi, Track, Episode } from "@spotify/web-api-ts-sdk";
-import Song from '../model/songModel';
+import Song, { song_placeholder } from '../model/songModel';
 import { downloadImageAsGrayscalePng } from "./imageModel";
 import { storage } from '../utils/storage';
 import { generateRefreshToken, checkForAuthCode } from '../Scripts/get_refresh_token';
 import placeholderArt from '../Assets/placeholder_art.jpg';
+import { fetchLyrics } from "./lyricsModel";
 
 let spotifysdk!: SpotifyApi;
 
@@ -141,42 +142,24 @@ class SpotifyModel {
         try {
             result = await spotifysdk.player.getCurrentlyPlayingTrack();
             if (result && result.device && result.device.id) {
+                console.log("Updated device ID from " + this.deviceId + " to " + result.device.id);
                 this.deviceId = result.device.id;
             }
         } catch (err) {
-            let placeholder_song = new Song()
-            placeholder_song.addTitle("Honestly");
-            placeholder_song.addArtist("THØRNS");
-            placeholder_song.addFeatures(["Kasane Teto"]);
-            placeholder_song.addAlbum("Honestly");
-            placeholder_song.addID("0");
-            placeholder_song.addProgressSeconds(this.placeholder_duration);
-            this.placeholder_duration += 2;
-            if (this.placeholder_duration > 210) {
-                this.placeholder_duration = 0;
-            }
-            placeholder_song.addDurationSeconds(210);
-            try {
-                placeholder_song.addArtRaw(await downloadImageAsGrayscalePng(placeholderArt, 100, 100));
-            } catch (e) {
-                console.error("Failed to load placeholder art:", e);
-                placeholder_song.addArtRaw(new Uint8Array());
-            }
-            placeholder_song.addisPlaying(true);
-            placeholder_song.addChangedState(false);
-            return placeholder_song;
+            return song_placeholder;
         }
 
         // No item means nothing is playing.
         if (!result || !result.item) {
             //console.log("User is not playing anything currently.");
-            return new Song();
+            return song_placeholder;
         }
 
         if (result.item.type === 'track') {
             const track = result.item as Track;
 
             if (track.id !== this.lastSong.songID) { // Check if the song has changed
+                console.log("Creating new song, ID changed from " + this.lastSong.songID + " to " + track.id);
                 const newSong = new Song();
                 newSong.addID(track.id);
                 newSong.addisPlaying(result.is_playing);
@@ -263,14 +246,17 @@ class SpotifyModel {
 
     async song_Pause() {
         try {
-            let state = await spotifysdk.player.getPlaybackState();
-            if (state.is_playing) {
-                await spotifysdk.player.pausePlayback(this.deviceId);
-            } else {
-                await spotifysdk.player.startResumePlayback(this.deviceId);
-            }
+            await spotifysdk.player.pausePlayback(this.deviceId);
         } catch (e) {
             console.error("Failed to pause playback:", e);
+        }
+    }
+
+    async song_Play() {
+        try {
+            await spotifysdk.player.startResumePlayback(this.deviceId);
+        } catch (e) {
+            console.error("Failed to play playback:", e);
         }
     }
 

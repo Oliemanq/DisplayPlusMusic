@@ -52,6 +52,17 @@
                 window.location.reload();
             }
         })
+        document.getElementById('clear-local-refresh-token').addEventListener('click', async () => {
+            console.log("Started clear")
+            await storage.removeItem('spotify_refresh_token');
+            console.log("Removed refresh token")
+            await storage.removeItem('spotify_access_token');
+            console.log("Removed access token")
+            await storage.removeItem('spotify_code_verifier');
+            console.log("Removed code verifier")
+            console.log("Spotify session cleared!");
+            window.location.reload();
+        })
     </script>
 
     <!-- Main UI -->
@@ -62,11 +73,19 @@
             <p id="song-artist" class="song-info"></p>
             <p id="song-album" class="song-info"></p>
         </span>
+        <span id="detailed-song-info-container" class="subcontainer">
+            <p id="song-current-time" class="song-info"></p>
+            <p id="divider" class="song-info"> - </p>
+            <p id="song-total-time" class="song-info"></p>
+        </span>
     </span>
-    <span id="buttons-container" class="container">
+    <span id="mini-buttons-container" class="container">
         <button class="button" id="previous-track">Previous track</button>
         <button class="button" id="play-pause">Play/Pause</button>
         <button class="button" id="skip-track">Skip track</button>
+    </span>
+    <span id="small-button-container" class="container">
+        <button class="small-button danger" id="clear-local-refresh-token">Logout</button>
     </span>
 
     <!-- Popup for spotify Auth -->
@@ -82,6 +101,7 @@
         <button class="small-button" id="open-login-page">
             Open login page
         </button>
+        <p id="login-page-link"></p>
 
         <span id="spacer"></span>
 
@@ -105,13 +125,18 @@
             /*gray*/
             --background: rgba(238, 238, 238, 1.0);
 
-            --button-foreground: rgba(255, 255, 255, 1.0);
-            --button-foreground-alt: rgb(35, 35, 35);
+            --button-foreground-light: rgba(255, 255, 255, 1.0);
+            --button-foreground-dark: rgb(35, 35, 35);
+            --button-foreground-danger: rgb(255, 84, 84);
+            --button-foreground-accent: rgb(254, 249, 145);
 
-            --button-background: rgba(228, 228, 228, 1.0);
+            --button-background-light: rgba(228, 228, 228, 1.0);
+            --button-background-dark: rgb(35, 35, 35);
+            --button-background-danger: rgb(255, 84, 84);
+            --button-background-accent: rgb(254, 249, 145);
 
-            --text: rgba(35, 35, 35, 1.0);
-            --text-alt: rgba(255, 255, 255, 1.0);
+            --text-dark: rgba(35, 35, 35, 1.0);
+            --text-light: rgba(255, 255, 255, 1.0);
 
             --text-field-background: rgba(35, 35, 35, 0.08);
 
@@ -163,7 +188,7 @@
             padding-bottom: 12px;
             margin-bottom: 12px;
 
-            background: var(--button-foreground);
+            background: var(--button-foreground-light);
             border-radius: 6px;
             font-size: 40px;
         }
@@ -195,20 +220,13 @@
             flex: 1;
         }
 
-        #album-art-container {
-            margin: 12px;
-            border-radius: 6px;
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            background-color: var(--button-foreground);
-        }
+        .container {
+            margin-top: 20px;
+            margin-bottom: 20px;
 
-        #buttons-container {
             display: flex;
-            margin: 12px;
+            margin-left: 12px;
+            margin-right: 12px;
             flex-direction: row;
             align-items: center;
             justify-content: space-between;
@@ -216,17 +234,37 @@
             gap: 12px;
         }
 
-        .subcontainer {
-            padding: 0px;
-            gap: 5px;
-            padding-left: 20px;
+        #album-art-container {
+            margin: 12px;
+            padding-left: 48px;
+            border-radius: 6px;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
-            justify-content: center;
+            justify-content: left;
+            font-size: 24px;
+            background-color: var(--button-foreground-light);
         }
 
+        .subcontainer {
+            display: flex;
+            flex-direction: column;
+            align-items: left;
+            justify-content: center;
 
+            gap: 10px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            padding-left: 40px;
+        }
+
+        #detailed-song-info-container {
+            flex-direction: row;
+        }
+
+        .song-info {
+            margin: 0;
+        }
 
         .button {
             display: flex;
@@ -236,11 +274,11 @@
             cursor: pointer;
 
             border-radius: 6px;
-            height: 35vh;
+            height: 5vh;
             font-size: 36px;
             flex: 1;
 
-            background-color: var(--button-foreground);
+            background-color: var(--button-foreground-light);
             color: var(--text);
         }
 
@@ -252,24 +290,30 @@
             padding: 16px;
             width: 100%;
             height: 96px;
-            margin-left: 6px;
-            margin-right: 6px;
-            margin-bottom: 6px;
 
             font-size: 40px;
             border-radius: 6px;
-            background-color: var(--button-foreground-alt);
-            color: var(--text-alt);
+            border: rgba(0, 0, 0, 0);
+        }
+
+        .small-button.dark {
+            background-color: var(--button-background-dark);
+            color: var(--text-light);
+        }
+
+        .small-button.danger {
+            background-color: var(--button-background-light);
+            color: var(--button-foreground-danger);
+        }
+
+        .small-button.accent {
+            background-color: var(--button-background-accent);
+            color: var(--button-foreground-dark)
         }
 
         #save-refresh-token {
             background-color: var(--accent);
             color: var(--text)
-        }
-
-
-        .song-info {
-            margin: 10px;
         }
     </style>
 </body>

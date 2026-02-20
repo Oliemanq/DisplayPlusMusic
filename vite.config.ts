@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite';
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   server: {
     host: '0.0.0.0',
   },
-  base: '/DisplayPlusMusic/'
-});
+  base: command === 'serve' ? '/' : '/DisplayPlusMusic/',
+}));

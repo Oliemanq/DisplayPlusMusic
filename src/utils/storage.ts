@@ -10,5 +10,9 @@ export const storage = {
     },
     getItem: async (key: string): Promise<string | null> => {
         return Promise.resolve(window.localStorage.getItem(key));
+    },
+    removeItem: async (key: string): Promise<void> => {
+        window.localStorage.removeItem(key);
+        return Promise.resolve();
     }
 };

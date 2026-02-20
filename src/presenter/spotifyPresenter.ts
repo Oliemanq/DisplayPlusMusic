@@ -1,4 +1,5 @@
 import spotifyModel, { initSpotify } from '../model/spotifyModel';
+import lyricsPresenter from './lyricsPresenter';
 import Song from '../model/songModel';
 import { formatTime } from '../Scripts/formatTime';
 import { createView } from '../view/GlassesView';
@@ -19,7 +20,7 @@ class SpotifyPresenter {
     private isPolling = false;
     private pollingRate = 1000; //Polling rate in ms
     private pollingTimeout: number | undefined;
-    private currentSong?: Song
+    public currentSong?: Song
 
     async startPolling() {
         if (this.isPolling) return;
@@ -40,6 +41,8 @@ class SpotifyPresenter {
 
         try {
             this.currentSong = await this.fetchCurrentSong();
+            lyricsPresenter.updateLyrics(this.currentSong);
+            lyricsPresenter.updateLyricsLine();
             createView(this.currentSong);
         } catch (error) {
             console.error("Error fetching song:", error);
@@ -61,6 +64,8 @@ class SpotifyPresenter {
         document.getElementById('song-name')!.textContent = song.title;
         document.getElementById('song-artist')!.textContent = song.artist;
         document.getElementById('song-album')!.textContent = song.album;
+        document.getElementById('song-current-time')!.textContent = formatTime(song.progressSeconds);
+        document.getElementById('song-total-time')!.textContent = formatTime(song.durationSeconds);
 
         const imgElement = document.getElementById('album-art') as HTMLImageElement;
         if (imgElement && song.albumArtRaw.length > 0) {
@@ -78,7 +83,11 @@ class SpotifyPresenter {
     }
 
     song_pauseplay() {
-        spotifyModel.song_Pause();
+        if (this.currentSong!.isPlaying) {
+            spotifyModel.song_Pause();
+        } else {
+            spotifyModel.song_Play();
+        }
     }
     song_back() {
         spotifyModel.song_Back();

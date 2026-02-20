@@ -13,6 +13,7 @@ import {
 
 import { formatTime } from '../Scripts/formatTime';
 import Song from '../model/songModel';
+import lyricsPresenter from '../presenter/lyricsPresenter';
 
 // State management variables
 let isPageCreated = false;
@@ -43,6 +44,7 @@ async function createView(songIn: Song) {
             containerName: 'album-art',
         });
 
+        const isPaused = songIn.isPlaying ? "  || " : " |> ";
         const buttons = new ListContainerProperty({
             xPosition: 110,
             yPosition: 0,
@@ -56,7 +58,7 @@ async function createView(songIn: Song) {
             itemContainer: new ListItemContainerProperty({
                 itemCount: 3,
                 itemWidth: 52,
-                itemName: ["  < ", "  || ", "  > "],
+                itemName: ["  < ", isPaused, "  > "],
                 isItemSelectBorderEn: 1
             })
         })
@@ -77,13 +79,13 @@ async function createView(songIn: Song) {
         });
 
 
-        const playbackBarText = formatTime(songIn.progressSeconds) + " / " + formatTime(songIn.durationSeconds) + "\n" + songIn.createPlaybackBar(MAX_WIDTH);
+        const playbackBarText = formatTime(songIn.progressSeconds) + " / " + formatTime(songIn.durationSeconds) + "\n" + songIn.createPlaybackBar(MAX_WIDTH) + "\n  " + lyricsPresenter.currentLine + "\n    " + lyricsPresenter.nextLine;
         // const playbackBarText = "<".repeat(57);
         const playbackBar = new TextContainerProperty({
             xPosition: 0,
             yPosition: 130,
             width: MAX_WIDTH,
-            height: 80,
+            height: 240,
             borderRdaius: 6,
             borderWidth: 1,
             containerID: 4,

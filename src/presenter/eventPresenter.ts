@@ -7,7 +7,7 @@ export async function eventHandler() {
 
     const unsubscribe = bridge.onEvenHubEvent((event) => {
         if (event.listEvent) {
-            console.log("EVENT __________" + event.listEvent.currentSelectItemIndex + " " + event.listEvent.currentSelectItemName);
+            console.log(event.listEvent.currentSelectItemIndex + " " + event.listEvent.currentSelectItemName);
             switch (event.listEvent.currentSelectItemIndex) {
                 case 1:
                     spotifyPresenter.song_pauseplay();

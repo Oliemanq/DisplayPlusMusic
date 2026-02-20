@@ -63,6 +63,8 @@ async function generateRefreshToken(): Promise<void> {
     const codeVerifier = generateRandomString(128);
     const codeChallenge = await generateCodeChallenge(codeVerifier);
 
+    console.log("generateRefreshToken passed generateRandomString and generateCodeChallenge");
+
     // Store the verifier for the callback
     await storage.setItem('spotify_code_verifier', codeVerifier);
 
@@ -78,6 +80,7 @@ async function generateRefreshToken(): Promise<void> {
 
     authUrl.search = new URLSearchParams(params).toString();
     // open in new tab
+    document.getElementById('login-page-link')!.textContent = authUrl.toString();
     window.open(authUrl.toString(), '_blank');
 }
 

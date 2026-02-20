@@ -1,56 +1,32 @@
 import spotifyModel, { initSpotify } from '../model/spotifyModel';
-import lyricsPresenter from './lyricsPresenter';
 import Song from '../model/songModel';
 import { formatTime } from '../Scripts/formatTime';
-import { createView } from '../view/GlassesView';
 import { waitForEvenAppBridge } from '@evenrealities/even_hub_sdk';
+import pollingPresenter from './pollingPresenter';
 
 class SpotifyPresenter {
+    public currentSong?: Song;
+    public nextSong?: Song;
+
     constructor() {
         // Optional: Stop polling when the tab is hidden to save resources
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
-                this.stopPolling();
+                pollingPresenter.stopPolling();
             } else {
-                this.startPolling();
+                pollingPresenter.startPolling();
             }
         });
     }
 
-    private isPolling = false;
-    private pollingRate = 1000; //Polling rate in ms
-    private pollingTimeout: number | undefined;
-    public currentSong?: Song
+    // Polling logic moved to pollingPresenter.ts
 
-    async startPolling() {
-        if (this.isPolling) return;
-        this.isPolling = true;
-        this.poll();
-    }
-
-    stopPolling() {
-        this.isPolling = false;
-        if (this.pollingTimeout) {
-            clearTimeout(this.pollingTimeout);
-            this.pollingTimeout = undefined;
-        }
-    }
-
-    private async poll() {
-        if (!this.isPolling) return;
-
+    async pollSingle() {
         try {
             this.currentSong = await this.fetchCurrentSong();
-            lyricsPresenter.updateLyrics(this.currentSong);
-            lyricsPresenter.updateLyricsLine();
-            createView(this.currentSong);
+            this.nextSong = await spotifyModel.fetchNextTrack();
         } catch (error) {
             console.error("Error fetching song:", error);
-        }
-
-        // Schedule next poll only after the current one completes
-        if (this.isPolling) {
-            this.pollingTimeout = window.setTimeout(() => this.poll(), this.pollingRate);
         }
     }
 

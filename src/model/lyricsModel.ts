@@ -1,7 +1,10 @@
 import Song from './songModel';
 
 async function fetchLyrics(song: Song) {
-    if (!song.title || song.title === "None") return null;
+    if (!song.title || song.title === "None") return {
+        plainLyrics: "No lyrics found",
+        syncedLyrics: "[0:00.00] No lyrics found \n[0:30.00] \n[1:00.00] "
+    };
 
     const url = new URL("https://lrclib.net/api/get");
     url.searchParams.append("track_name", song.title);
@@ -18,12 +21,14 @@ async function fetchLyrics(song: Song) {
 
         if (!response.ok) {
             console.log(`Lyrics not found for ${song.title} (${response.status})`);
-            return null;
+            return {
+                plainLyrics: "No lyrics found",
+                syncedLyrics: "[0:00.00] No lyrics found \n[0:15.00] "
+            };
         }
 
         const data = await response.json();
-        console.log("Lyrics fetched successfully:", data.syncedLyrics ? "Has synced lyrics" : "Plain lyrics only");
-        console.log("raw data: " + JSON.stringify(data));
+        console.log(`Lyrics fetched for ${song.title} successfully:`, data.syncedLyrics ? "Has synced lyrics" : "Plain lyrics only");
 
         return {
             plainLyrics: data.plainLyrics,
@@ -31,7 +36,10 @@ async function fetchLyrics(song: Song) {
         };
     } catch (e) {
         console.error("Failed to fetch lyrics:", e);
-        return null;
+        return {
+            plainLyrics: "No lyrics found",
+            syncedLyrics: "[0:00.00] No lyrics found \n[0:30.00] \n[1:00.00] "
+        };
     }
 }
 

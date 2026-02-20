@@ -26,7 +26,7 @@ let MAX_WIDTH = 576
 async function createView(songIn: Song) {
     // Basic concurrency guard
     if (isUpdating) {
-        console.log("Skipping update - previous update still in progress");
+        // console.log("Skipping update - previous update still in progress");
         return;
     }
 

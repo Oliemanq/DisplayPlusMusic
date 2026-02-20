@@ -4,12 +4,14 @@ import { eventHandler } from './presenter/eventPresenter';
 import { enableMobileConsole } from './Scripts/debugConsole';
 import { fetchLyrics } from './model/lyricsModel';
 
+import pollingPresenter from './presenter/pollingPresenter';
+
 async function main() {
     enableMobileConsole();
     console.log("App starting...");
     await initSpotify();
 
-    spotifyPresenter.startPolling();
+    pollingPresenter.startPolling();
     eventHandler();
 
     const currentSong = await spotifyPresenter.fetchCurrentSong();

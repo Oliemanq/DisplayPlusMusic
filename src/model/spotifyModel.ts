@@ -137,6 +137,32 @@ class SpotifyModel {
 
     placeholder_duration = 0;
 
+    async fetchNextTrack(): Promise<Song | undefined> {
+        try {
+            const queueResponse = await spotifysdk.player.getUsersQueue();
+            if (queueResponse && queueResponse.queue && queueResponse.queue.length > 0) {
+                const nextTrack = queueResponse.queue[0];
+                if (nextTrack.type === 'track') {
+                    const track = nextTrack as Track;
+                    const nextSong = new Song();
+                    nextSong.addID(track.id);
+                    nextSong.addTitle(track.name);
+
+                    const artistNames = track.artists.map(artist => artist.name);
+                    nextSong.addArtist(artistNames[0]);
+                    nextSong.addFeatures(artistNames.slice(1));
+                    nextSong.addAlbum(track.album.name);
+
+                    return nextSong;
+                }
+            }
+            return undefined;
+        } catch (err) {
+            console.error("Failed to fetch next track from queue:", err);
+            return undefined;
+        }
+    }
+
     async fetchCurrentTrack(): Promise<Song> {
         let result;
         try {

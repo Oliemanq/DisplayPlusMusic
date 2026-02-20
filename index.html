@@ -29,15 +29,8 @@
             spotifyPresenter.song_back();
         })
 
-        let generatedAuthUrl;
-        spotifyAuthModel.generateURL().then(url => {
-            generatedAuthUrl = url;
-        });
-
         document.getElementById('open-login-page').addEventListener('click', () => {
-            if (generatedAuthUrl) {
-                spotifyAuthModel.generateRefreshToken(generatedAuthUrl);
-            }
+            spotifyAuthModel.generateRefreshToken();
         })
         document.getElementById('copy-login-link').addEventListener('click', async () => {
             const linkText = document.getElementById('login-page-link').innerText;

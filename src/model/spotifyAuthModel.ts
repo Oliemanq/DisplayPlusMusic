@@ -3,15 +3,11 @@ import { storage } from '../utils/storage';
 
 class SpotifyAuthModel {
 
-    CLIENT_ID: string;
-    REDIRECT_URI: string;
-    SCOPES: string;
 
-    constructor() {
-        this.CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENTID; // Ensure this is set in your .env
-        this.REDIRECT_URI = 'https://httpbin.org/get'; // Using httpbin to easily copy code on mobile
-        this.SCOPES = 'user-modify-playback-state user-read-playback-state';
-    }
+
+    CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENTID; // Ensure this is set in your .env
+    REDIRECT_URI = 'https://httpbin.org/get'; // Using httpbin to easily copy code on mobile
+    SCOPES = 'user-modify-playback-state user-read-playback-state';
 
     /**
      * Generates a random string for PKCE code verifier
@@ -67,12 +63,11 @@ class SpotifyAuthModel {
     /**
      * Initiates the PKCE Auth Flow by redirecting the user to Spotify
      */
-
-    async generateURL(): Promise<URL> {
+    async generateRefreshToken(): Promise<void> {
         const codeVerifier = this.generateRandomString(128);
         const codeChallenge = await this.generateCodeChallenge(codeVerifier);
 
-        console.log("generateURL passed generateRandomString and generateCodeChallenge");
+        console.log("generateRefreshToken passed generateRandomString and generateCodeChallenge");
 
         // Store the verifier for the callback
         await storage.setItem('spotify_code_verifier', codeVerifier);
@@ -88,11 +83,8 @@ class SpotifyAuthModel {
         };
 
         authUrl.search = new URLSearchParams(params).toString();
-        return authUrl;
-    }
-
-    async generateRefreshToken(authUrl: URL): Promise<void> {
         // open in new tab
+        document.getElementById('login-page-link')!.textContent = authUrl.toString();
         window.open(authUrl.toString(), '_blank');
     }
 

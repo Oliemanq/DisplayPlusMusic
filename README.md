@@ -1,1 +1,1 @@
-![QR Code](/src/assets/githubpagesQR.png)
+<img src="src/assets/githubpagesQR.png" alt="QR Code" width="300" />

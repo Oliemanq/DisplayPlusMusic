@@ -32,6 +32,37 @@
         document.getElementById('clear-local-refresh-token').addEventListener('click', async () => {
             viewPresenter.clearLocalStorage();
         })
+
+        // Make popup links copyable
+        document.querySelectorAll('.popup-link').forEach(link => {
+            link.addEventListener('click', async (e) => {
+                const target = e.target;
+                const textToCopy = target.innerText.trim();
+                const originalText = textToCopy;
+
+                try {
+                    if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext) {
+                        await navigator.clipboard.writeText(textToCopy);
+                    } else {
+                        // Fallback for HTTP / non-secure contexts
+                        const textArea = document.createElement("textarea");
+                        textArea.value = textToCopy;
+                        document.body.appendChild(textArea);
+                        textArea.focus();
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                    }
+
+                    target.innerText = "Copied!";
+                    setTimeout(() => {
+                        target.innerText = originalText;
+                    }, 1000);
+                } catch (err) {
+                    console.error('Failed to copy', err);
+                }
+            });
+        });
     </script>
 
     <!-- Main UI -->
@@ -62,14 +93,23 @@
         <p class="popup-title">
             Spotify Setup Required
         </p>
-        <p class="popup-label">
-            Enter your Spotify Developer App credentials.
-        </p>
+        <span class="popup-label">
+            <p> To get started, head to </p>
+            <p class="popup-link">https://developer.spotify.com/dashboard/</p>
+            <p>in a browser and sign in. From there, create an app and add a name and description of your choice.
+                <br>Then add <br>
+            </p>
+            <p class="popup-link">https://oliemanq.github.io/DisplayPlusMusic/</p>
+            <p>as a Redirect URI and select 'Web API'at the bottom. <br>
+                Finally, copy your client ID and client secret from there and paste them below.</p>
+        </span>
 
-        <span id="spacer"></span>
 
         <input class="popup-input" id="client-id" placeholder="Client ID">
         <input class="popup-input" type="password" id="client-secret" placeholder="Client Secret">
+
+        <span id="spacer"></span>
+
         <button class="small-button accent" id="save-auth">Save & Authorize</button>
     </div>
 
@@ -132,13 +172,40 @@
             gap: 12px;
 
             border-radius: 6px 6px 0 0;
-            font-size: 40px;
+            font-size: 36px;
 
             background: var(--background);
             box-shadow: 0 0 0 1000vw rgba(0, 0, 0, 0.5);
 
             transform: translateY(100%);
             animation: slideUp 0.6s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+        }
+
+        .popup-title {
+            font-weight: bold;
+            font-size: 48px;
+        }
+
+        .popup-link {
+            background-color: var(--accent);
+            color: var(--text-dark);
+
+            padding-left: 10px;
+            padding-right: 10px;
+
+            margin-left: 90px;
+            margin-right: 90px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+
+            border-radius: 6px;
+
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .popup-link:active {
+            opacity: 0.5;
         }
 
         .popup-label {

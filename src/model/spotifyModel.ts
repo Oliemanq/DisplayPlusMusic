@@ -110,7 +110,12 @@ async function initSpotify(): Promise<void> {
 export { initSpotify };
 
 class SpotifyModel {
-    REDIRECT_URI = window.location.protocol + "//" + window.location.host + window.location.pathname;
+    get REDIRECT_URI() {
+        if (window.location.hostname === '127.0.0.1') {
+            return "http://127.0.0.1:5173/";
+        }
+        return "https://oliemanq.github.io/DisplayPlusMusic/";
+    }
     CLIENT_ID = "";
     SCOPE = ['user-modify-playback-state', 'user-read-playback-state'];
 

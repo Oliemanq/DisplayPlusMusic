@@ -1,9 +1,13 @@
 import { storage } from '../utils/storage';
 
 class SpotifyAuthModel {
-    // Generate the redirect URI dynamically to match EXACTLY what's in the address bar (minus query parameters)
-    // This handles both `http://100.x.x.x:5173/` and `https://oliemanq.github.io/DisplayPlusMusic/`
-    REDIRECT_URI = window.location.protocol + "//" + window.location.host + window.location.pathname;
+    // Generate the redirect URI. Spotify strictly forbids HTTP IP addresses other than 127.0.0.1.
+    get REDIRECT_URI() {
+        if (window.location.hostname === '127.0.0.1') {
+            return "http://127.0.0.1:5173/";
+        }
+        return "https://oliemanq.github.io/DisplayPlusMusic/";
+    }
     SCOPES = 'user-modify-playback-state user-read-playback-state';
 
     /**
@@ -21,6 +25,7 @@ class SpotifyAuthModel {
      * Initiates the Auth Flow by redirecting the user to Spotify
      */
     async generateAuthUrl(clientId: string): Promise<void> {
+        console.log("Using Redirect URI: " + this.REDIRECT_URI);
         const state = this.generateRandomString(16);
         await storage.setItem('spotify_auth_state', state);
 

@@ -157,8 +157,8 @@ class SpotifyModel {
                 }
             }
             return undefined;
-        } catch (err) {
-            console.error("Failed to fetch next track from queue:", err);
+        } catch (err: any) {
+            console.error("Failed to fetch next track from queue:", err.message || String(err));
             return undefined;
         }
     }
@@ -171,7 +171,11 @@ class SpotifyModel {
                 console.log("Updated device ID from " + this.deviceId + " to " + result.device.id);
                 this.deviceId = result.device.id;
             }
-        } catch (err) {
+        } catch (err: any) {
+            console.error("Failed to fetch current track:", err.message || String(err));
+            if (err.message && err.message.includes("Premium")) {
+                console.error("Spotify Premium is required for this feature.");
+            }
             return song_placeholder;
         }
 

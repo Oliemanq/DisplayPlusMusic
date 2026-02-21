@@ -50,7 +50,14 @@ class ViewPresenter {
         const inputVal = (document.getElementById('refresh-token') as HTMLInputElement).value;
         console.log("Attempting to save/exchange token...");
 
-        const newToken = await spotifyAuthModel.exchangeCodeForToken(inputVal);
+        // Sanitize input: extract just the code if the user pasted the JSON string accidentally
+        let sanitizedToken = inputVal.trim();
+        const codeMatch = sanitizedToken.match(/"code":\s*"([^"]+)"/);
+        if (codeMatch && codeMatch[1]) {
+            sanitizedToken = codeMatch[1];
+        }
+
+        const newToken = await spotifyAuthModel.exchangeCodeForToken(sanitizedToken);
         if (newToken) {
             console.log("Exchanged code for refresh token successfully.");
             await storage.setItem('spotify_refresh_token', newToken);

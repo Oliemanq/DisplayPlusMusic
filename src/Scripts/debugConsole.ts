@@ -21,9 +21,11 @@ export function enableMobileConsole() {
         line.style.color = color;
         line.style.borderBottom = '1px solid #333';
 
-        if (typeof message === 'object') {
+        if (message instanceof Error) {
+            line.textContent = `${message.name}: ${message.message}\n${message.stack || ''}`;
+        } else if (typeof message === 'object') {
             try {
-                line.textContent = JSON.stringify(message);
+                line.textContent = JSON.stringify(message, null, 2);
             } catch (e) {
                 line.textContent = message.toString();
             }

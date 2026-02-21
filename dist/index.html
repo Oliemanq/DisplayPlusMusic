@@ -6,7 +6,7 @@
     <title>Even Realities App</title>
     <meta http-equiv="Content-Security-Policy"
         content="script-src 'self' 'unsafe-inline' https://accounts.scdn.co https://sdk.scdn.co blob:; worker-src 'self' blob:;" />
-  <script type="module" crossorigin src="/DisplayPlusMusic/assets/index-BVXaWYW5.js"></script>
+  <script type="module" crossorigin src="/DisplayPlusMusic/assets/index-DCrjmgg7.js"></script>
 </head>
 
 <body>
@@ -47,6 +47,8 @@
             From there, you need to copy the first "code": section, through to the last " mark.<br><br>
             Hit the back arrow and paste the code in to 'Refresh Token' and hit save
         </p>
+
+        <span id="login-page-link" style="display: none;"></span>
 
         <button class="small-button dark" id="open-login-page">
             Open login page
@@ -243,10 +245,21 @@
 
             font-size: 40px;
             border-radius: 6px;
-            border: rgba(0, 0, 0, 0);
+            border: none;
 
             background-color: var(--button-background-light);
-            color: var(--button-foreground-dark)
+            color: var(--button-foreground-dark);
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+
+        .small-button:hover {
+            opacity: 0.9;
+        }
+
+        .small-button:active {
+            opacity: 0.7;
+            transform: scale(0.98);
         }
 
         .small-button.dark {

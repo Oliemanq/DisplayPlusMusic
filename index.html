@@ -14,77 +14,29 @@
 
 
     <script type="module">
-        import spotifyPresenter from './src/presenter/spotifyPresenter.ts';
-        import { storage } from './src/utils/storage';
-        import spotifyAuthModel from './src/model/spotifyAuthModel.ts';
-        import { initSpotify } from './src/model/spotifyModel';
+        import viewPresenter from './src/presenter/viewPresenter.ts';
 
         document.getElementById('skip-track').addEventListener('click', () => {
-            spotifyPresenter.song_forward();
+            viewPresenter.forwardTrack();
         })
         document.getElementById('play-pause').addEventListener('click', () => {
-            spotifyPresenter.song_pauseplay();
+            viewPresenter.playPauseTrack();
         })
         document.getElementById('previous-track').addEventListener('click', () => {
-            spotifyPresenter.song_back();
+            viewPresenter.backTrack();
         })
 
         document.getElementById('open-login-page').addEventListener('click', () => {
-            spotifyAuthModel.generateRefreshToken();
+            viewPresenter.loginPage();
         })
         document.getElementById('copy-login-link').addEventListener('click', async () => {
-            const linkElem = document.getElementById('login-page-link');
-            const linkText = linkElem ? linkElem.textContent : "";
-            if (!linkText) {
-                alert("No link to copy. Please click 'Open login page' first.");
-                return;
-            }
-            try {
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    await navigator.clipboard.writeText(linkText);
-                    alert("Link copied to clipboard!");
-                } else {
-                    const textArea = document.createElement("textarea");
-                    textArea.value = linkText;
-                    document.body.appendChild(textArea);
-                    textArea.focus();
-                    textArea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textArea);
-                    alert("Link copied to clipboard!");
-                }
-            } catch (err) {
-                console.error("Failed to copy text: ", err);
-                alert("Failed to copy link.");
-            }
+            viewPresenter.copyLoginLink();
         })
         document.getElementById('save-refresh-token').addEventListener('click', async () => {
-            const inputVal = document.getElementById('refresh-token').value;
-            console.log("Attempting to save/exchange token...");
-
-            const newToken = await spotifyAuthModel.exchangeCodeForToken(inputVal);
-            if (newToken) {
-                console.log("Exchanged code for refresh token successfully.");
-                await storage.setItem('spotify_refresh_token', newToken);
-                alert("Token exchanged and saved! Reloading...");
-                window.location.reload();
-            } else {
-                console.log("Not a valid code or exchange failed. Assuming it is a refresh token.");
-                await storage.setItem('spotify_refresh_token', inputVal);
-                alert("Refresh token saved! Reloading...");
-                window.location.reload();
-            }
+            viewPresenter.saveRefreshToken();
         })
         document.getElementById('clear-local-refresh-token').addEventListener('click', async () => {
-            console.log("Started clear")
-            await storage.removeItem('spotify_refresh_token');
-            console.log("Removed refresh token")
-            await storage.removeItem('spotify_access_token');
-            console.log("Removed access token")
-            await storage.removeItem('spotify_code_verifier');
-            console.log("Removed code verifier")
-            console.log("Spotify session cleared!");
-            window.location.reload();
+            viewPresenter.clearLocalStorage();
         })
     </script>
 

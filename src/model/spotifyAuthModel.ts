@@ -2,9 +2,6 @@ import { sha256 } from "../Scripts/sha256";
 import { storage } from '../utils/storage';
 
 class SpotifyAuthModel {
-
-
-
     CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENTID; // Ensure this is set in your .env
     REDIRECT_URI = 'https://httpbin.org/get'; // Using httpbin to easily copy code on mobile
     SCOPES = 'user-modify-playback-state user-read-playback-state';

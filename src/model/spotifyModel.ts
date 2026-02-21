@@ -9,46 +9,35 @@ import { fetchLyrics } from "./lyricsModel";
 let spotifysdk!: SpotifyApi;
 
 async function initSpotify(): Promise<void> {
-    const HARDCODED_REFRESH_TOKEN = import.meta.env.VITE_SPOTIFY_REFRESH_TOKEN;
+    const clientId = await storage.getItem('spotify_client_id');
+    const clientSecret = await storage.getItem('spotify_client_secret');
 
     // Check if we are returning from an auth redirect
-    const codeRefreshToken = await spotifyAuthModel.checkForAuthCode();
+    const codeData = await spotifyAuthModel.checkForAuthCode();
 
-    // Logic to resolve which token to use
-    let refreshTokenToUse = codeRefreshToken || HARDCODED_REFRESH_TOKEN;
-    let usingStoredToken = false;
+    let refreshTokenToUse;
+    let authData;
 
-    // If we got a new token from the code exchange, save it immediately
-    if (codeRefreshToken) {
-        console.log("New Refresh Token obtained from code exchange!", codeRefreshToken);
-        // Show in UI
-        (document.getElementById('refresh-token') as HTMLInputElement).value = codeRefreshToken;
-
-        try {
-            await storage.setItem("spotify_refresh_token", codeRefreshToken);
-            usingStoredToken = true;
-        } catch (e) {
-            console.error("Failed to persist new token:", e);
+    try {
+        const storedToken = await storage.getItem("spotify_refresh_token");
+        if (storedToken && storedToken.length > 20) {
+            refreshTokenToUse = storedToken;
         }
-    } else {
-        // Try to load from storage if we didn't just get one
-        try {
-            const storedToken = await storage.getItem("spotify_refresh_token");
-            if (storedToken && storedToken.length > 20 && storedToken !== "PASTE_YOUR_REFRESH_TOKEN_HERE") {
-                console.log("Found stored refresh token, attempting to use it.");
-                refreshTokenToUse = storedToken;
-                usingStoredToken = true;
-            }
-        } catch (e) {
-            console.error("Error accessing bridge storage:", e);
-        }
+    } catch (e) {
+        console.error("Error accessing storage:", e);
     }
 
-    if (refreshTokenToUse === "PASTE_YOUR_REFRESH_TOKEN_HERE") {
-        console.error("No Refresh Token provided!");
-        //alert("Setup Required: Valid Refresh Token missing.");
+    if (!clientId || !clientSecret || (!refreshTokenToUse && !codeData)) {
+        console.error("Setup incomplete!");
+        const popup = document.getElementById('spotify-auth-popup');
+        if (popup) {
+            popup.style.display = 'flex';
+        }
         return;
     }
+
+    // Assign dynamically
+    spotifyModel.CLIENT_ID = clientId;
 
     // AUTHENTICATION FUNCTION
     const authenticateWithToken = async (token: string) => {
@@ -57,9 +46,9 @@ async function initSpotify(): Promise<void> {
             method: "POST",
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
+                "Authorization": "Basic " + btoa(clientId + ":" + clientSecret)
             },
             body: new URLSearchParams({
-                client_id: spotifyModel.CLIENT_ID,
                 grant_type: "refresh_token",
                 refresh_token: token,
             }),
@@ -69,30 +58,27 @@ async function initSpotify(): Promise<void> {
         return data;
     };
 
-    // Attempt Auth with retries
-    let authData;
     try {
-        try {
-            authData = await authenticateWithToken(refreshTokenToUse);
-        } catch (err) {
-            // If we failed using the stored token, try the hardcoded one as fallback
-            if (usingStoredToken && refreshTokenToUse !== HARDCODED_REFRESH_TOKEN) {
-                console.warn("Stored token failed, falling back to hardcoded token...");
-                //alert("Restoring connection with new token...");
-                authData = await authenticateWithToken(HARDCODED_REFRESH_TOKEN);
-                // If this worked, we should update the storage immediately
-                usingStoredToken = false;
-            } else {
-                throw err;
+        if (codeData) {
+            authData = codeData;
+            if (authData.refresh_token) {
+                refreshTokenToUse = authData.refresh_token;
+                try {
+                    await storage.setItem("spotify_refresh_token", authData.refresh_token);
+                    console.log("Initial refresh token saved.");
+                } catch (e) {
+                    console.error("Failed to persist token:", e);
+                }
             }
+        } else if (refreshTokenToUse) {
+            authData = await authenticateWithToken(refreshTokenToUse);
         }
 
         console.log("Access Token acquired!");
 
-        // Update persistence if we have a new refresh token OR if we successfully fell back to hardcoded
-        const newRefreshToken = authData.refresh_token || (usingStoredToken ? undefined : HARDCODED_REFRESH_TOKEN);
-
-        if (newRefreshToken) {
+        const newRefreshToken = authData.refresh_token;
+        if (newRefreshToken && newRefreshToken !== refreshTokenToUse) {
+            refreshTokenToUse = newRefreshToken;
             try {
                 await storage.setItem("spotify_refresh_token", newRefreshToken);
                 console.log("Refreshed token persisted to storage.");
@@ -103,12 +89,12 @@ async function initSpotify(): Promise<void> {
 
         // Initialize SDK
         spotifysdk = SpotifyApi.withAccessToken(
-            spotifyModel.CLIENT_ID,
+            clientId,
             {
                 access_token: authData.access_token,
                 token_type: authData.token_type || "Bearer",
                 expires_in: authData.expires_in,
-                refresh_token: newRefreshToken || refreshTokenToUse,
+                refresh_token: refreshTokenToUse,
                 expires: Date.now() + (authData.expires_in * 1000)
             }
         );
@@ -119,14 +105,13 @@ async function initSpotify(): Promise<void> {
         if (popup) {
             popup.style.display = 'flex';
         }
-        //alert("Authentication Failed. Please check your internet or regenerate the token.");
     }
 }
 export { initSpotify };
 
 class SpotifyModel {
-    REDIRECT_URI = `${window.location.origin}/`;
-    CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENTID;
+    REDIRECT_URI = window.location.protocol + "//" + window.location.host + window.location.pathname;
+    CLIENT_ID = "";
     SCOPE = ['user-modify-playback-state', 'user-read-playback-state'];
 
     currentSong = new Song();

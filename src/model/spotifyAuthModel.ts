@@ -1,13 +1,13 @@
-import { sha256 } from "../Scripts/sha256";
 import { storage } from '../utils/storage';
 
 class SpotifyAuthModel {
-    CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENTID; // Ensure this is set in your .env
-    REDIRECT_URI = 'https://httpbin.org/get'; // Using httpbin to easily copy code on mobile
+    // Generate the redirect URI dynamically to match EXACTLY what's in the address bar (minus query parameters)
+    // This handles both `http://100.x.x.x:5173/` and `https://oliemanq.github.io/DisplayPlusMusic/`
+    REDIRECT_URI = window.location.protocol + "//" + window.location.host + window.location.pathname;
     SCOPES = 'user-modify-playback-state user-read-playback-state';
 
     /**
-     * Generates a random string for PKCE code verifier
+     * Generates a random string for state parameter
      */
     generateRandomString(length: number): string {
         const validChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -18,104 +18,48 @@ class SpotifyAuthModel {
     }
 
     /**
-     * Encodes a buffer to Base64 Url Safe string
+     * Initiates the Auth Flow by redirecting the user to Spotify
      */
-    base64UrlEncode(a: ArrayBuffer): string {
-        let str = "";
-        const bytes = new Uint8Array(a);
-        const len = bytes.byteLength;
-        for (let i = 0; i < len; i++) {
-            str += String.fromCharCode(bytes[i]);
-        }
-        return btoa(str)
-            .replace(/\+/g, "-")
-            .replace(/\//g, "_")
-            .replace(/=+$/, "");
-    }
-
-    /**
-     * Generates the PKCE code challenge from the verifier
-     */
-    async generateCodeChallenge(codeVerifier: string): Promise<string> {
-        const encoder = new TextEncoder();
-        /*
-        const data = encoder.encode(codeVerifier);
-        const digest = await window.crypto.subtle.digest("SHA-256", data);
-        return base64UrlEncode(digest);
-        */
-
-        // Use Web Crypto API if available (Secure Context)
-        if (window.crypto && window.crypto.subtle) {
-            const data = encoder.encode(codeVerifier);
-            const digest = await window.crypto.subtle.digest("SHA-256", data);
-            return this.base64UrlEncode(digest);
-        } else {
-            // Fallback to pure JS implementation for insecure contexts
-            console.warn("Secure context not detected (crypto.subtle undefined). Using JS SHA-256 fallback.");
-            const digest = sha256(codeVerifier); // Returns Uint8Array
-            return this.base64UrlEncode(digest.buffer as ArrayBuffer);
-        }
-    }
-
-    /**
-     * Initiates the PKCE Auth Flow by redirecting the user to Spotify
-     */
-    async generateRefreshToken(): Promise<void> {
-        const codeVerifier = this.generateRandomString(128);
-        const codeChallenge = await this.generateCodeChallenge(codeVerifier);
-
-        console.log("generateRefreshToken passed generateRandomString and generateCodeChallenge");
-
-        // Store the verifier for the callback
-        await storage.setItem('spotify_code_verifier', codeVerifier);
+    async generateAuthUrl(clientId: string): Promise<void> {
+        const state = this.generateRandomString(16);
+        await storage.setItem('spotify_auth_state', state);
 
         const authUrl = new URL("https://accounts.spotify.com/authorize");
         const params = {
             response_type: 'code',
-            client_id: this.CLIENT_ID,
+            client_id: clientId,
             scope: this.SCOPES,
-            code_challenge_method: 'S256',
-            code_challenge: codeChallenge,
             redirect_uri: this.REDIRECT_URI,
+            state: state,
         };
 
         authUrl.search = new URLSearchParams(params).toString();
-        // open in new tab
-        document.getElementById('login-page-link')!.textContent = authUrl.toString();
-        window.open(authUrl.toString(), '_blank');
+        // Redirect the whole page
+        window.location.href = authUrl.toString();
     }
 
     /**
      * Exchanges an auth code for a refresh token
      */
-    async exchangeCodeForToken(code: string): Promise<string | null> {
-        const codeVerifier = await storage.getItem('spotify_code_verifier');
-        if (!codeVerifier) {
-            console.error("No code verifier found in storage. Auth flow might be stale.");
-            return null;
-        }
-
+    async exchangeCodeForToken(code: string, clientId: string, clientSecret: string): Promise<any | null> {
         try {
             const response = await fetch('https://accounts.spotify.com/api/token', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
+                    'Authorization': 'Basic ' + btoa(clientId + ':' + clientSecret)
                 },
                 body: new URLSearchParams({
-                    client_id: this.CLIENT_ID,
                     grant_type: 'authorization_code',
                     code: code,
                     redirect_uri: this.REDIRECT_URI,
-                    code_verifier: codeVerifier,
                 }),
             });
 
             const data = await response.json();
 
-            if (data.refresh_token) {
-                // Clear the verifier
-                await storage.setItem('spotify_code_verifier', "");
-                return data.refresh_token;
+            if (data.refresh_token && data.access_token) {
+                return data;
             } else {
                 console.error('Error exchanging token:', data);
                 return null;
@@ -128,21 +72,32 @@ class SpotifyAuthModel {
 
     /**
      * Checks the URL for an auth code and exchanges it for tokens
-     * Returns the Refresh Token if successful, or null if no code found/error
+     * Returns the token data if successful, or null if no code found/error
      */
-    async checkForAuthCode(): Promise<string | null> {
+    async checkForAuthCode(): Promise<any | null> {
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
+        const state = urlParams.get('state');
 
         if (!code) return null;
 
         // Clean the URL
-        window.history.replaceState({}, document.title, "/");
+        window.history.replaceState({}, document.title, window.location.pathname);
 
-        return await this.exchangeCodeForToken(code);
+        const savedState = await storage.getItem('spotify_auth_state');
+        if (state !== savedState) {
+            console.error("State mismatch");
+            return null;
+        }
+        await storage.removeItem('spotify_auth_state');
+
+        const clientId = await storage.getItem('spotify_client_id');
+        const clientSecret = await storage.getItem('spotify_client_secret');
+
+        if (!clientId || !clientSecret) return null;
+
+        return await this.exchangeCodeForToken(code, clientId, clientSecret);
     }
-
-
 }
 
 const spotifyAuthModel = new SpotifyAuthModel();

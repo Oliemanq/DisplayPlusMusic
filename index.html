@@ -26,14 +26,8 @@
             viewPresenter.backTrack();
         })
 
-        document.getElementById('open-login-page').addEventListener('click', () => {
-            viewPresenter.loginPage();
-        })
-        document.getElementById('copy-login-link').addEventListener('click', async () => {
-            viewPresenter.copyLoginLink();
-        })
-        document.getElementById('save-refresh-token').addEventListener('click', async () => {
-            viewPresenter.saveRefreshToken();
+        document.getElementById('save-auth').addEventListener('click', async () => {
+            viewPresenter.saveAndAuthorize();
         })
         document.getElementById('clear-local-refresh-token').addEventListener('click', async () => {
             viewPresenter.clearLocalStorage();
@@ -66,25 +60,17 @@
     <!-- Popup for spotify Auth -->
     <div id="spotify-auth-popup" class="popup">
         <p class="popup-title">
-            Spotify Auth required
+            Spotify Setup Required
         </p>
         <p class="popup-label">
-            Click on 'Open login page' and authorize the app.<br><br>
-            From there, you need to copy the first "code": section, through to the last " mark.<br><br>
-            Hit the back arrow and paste the code in to 'Refresh Token' and hit save
+            Enter your Spotify Developer App credentials.
         </p>
-
-        <span id="login-page-link" style="display: none;"></span>
-
-        <button class="small-button dark" id="open-login-page">
-            Open login page
-        </button>
-        <button class="small-button" id="copy-login-link">Copy Link</button>
 
         <span id="spacer"></span>
 
-        <input class="popup-input" id="refresh-token" placeholder="Refresh Token">
-        <button class="small-button accent" id="save-refresh-token">Save</button>
+        <input class="popup-input" id="client-id" placeholder="Client ID">
+        <input class="popup-input" type="password" id="client-secret" placeholder="Client Secret">
+        <button class="small-button accent" id="save-auth">Save & Authorize</button>
     </div>
 
     <style>
@@ -303,7 +289,7 @@
             color: var(--button-foreground-dark)
         }
 
-        #save-refresh-token {
+        #save-auth {
             background-color: var(--accent);
             color: var(--text)
         }

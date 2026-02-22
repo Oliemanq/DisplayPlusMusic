@@ -57,7 +57,7 @@ async function createView(songIn: Song) {
             itemContainer: new ListItemContainerProperty({
                 itemCount: 3,
                 itemWidth: 52,
-                itemName: ["l◁", "▶ll", "▷l"],
+                itemName: ["l◁", "▷ll", "▷l"],
                 isItemSelectBorderEn: 1
             })
         })

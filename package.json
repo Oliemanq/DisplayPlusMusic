@@ -27,6 +27,7 @@
     "@evenrealities/evenhub-simulator": "^0.1.2",
     "@spotify/web-api-ts-sdk": "^1.2.0",
     "fs": "^0.0.1-security",
+    "playwright": "^1.58.2",
     "stream": "^0.0.3"
   },
   "devDependencies": {

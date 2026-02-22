@@ -36,6 +36,9 @@ class SpotifyPresenter {
         return temp
     }
 
+    private lastWebSongID: string = "";
+    private lastBlobUrl?: string;
+
     async updateHTML(song: Song) {
         document.getElementById('song-name')!.textContent = song.title;
         document.getElementById('song-artist')!.textContent = song.artist;
@@ -43,10 +46,17 @@ class SpotifyPresenter {
         document.getElementById('song-current-time')!.textContent = formatTime(song.progressSeconds);
         document.getElementById('song-total-time')!.textContent = formatTime(song.durationSeconds);
 
-        const imgElement = document.getElementById('album-art') as HTMLImageElement;
-        if (imgElement && song.albumArtRaw.length > 0) {
-            const blob = new Blob([song.albumArtRaw] as BlobPart[], { type: 'image/png' });
-            imgElement.src = URL.createObjectURL(blob);
+        if (song.songID !== this.lastWebSongID) {
+            const imgElement = document.getElementById('album-art') as HTMLImageElement;
+            if (imgElement && song.albumArtRaw.length > 0) {
+                if (this.lastBlobUrl) {
+                    URL.revokeObjectURL(this.lastBlobUrl);
+                }
+                const blob = new Blob([song.albumArtRaw] as BlobPart[], { type: 'image/png' });
+                this.lastBlobUrl = URL.createObjectURL(blob);
+                imgElement.src = this.lastBlobUrl;
+            }
+            this.lastWebSongID = song.songID;
         }
     }
 

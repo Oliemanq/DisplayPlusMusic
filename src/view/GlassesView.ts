@@ -44,7 +44,6 @@ async function createView(songIn: Song) {
             containerName: 'album-art',
         });
 
-        const isPaused = songIn.isPlaying ? "  || " : " ▶";
         const buttons = new ListContainerProperty({
             xPosition: 110,
             yPosition: 0,
@@ -58,7 +57,7 @@ async function createView(songIn: Song) {
             itemContainer: new ListItemContainerProperty({
                 itemCount: 3,
                 itemWidth: 52,
-                itemName: ["l◁", isPaused, "▷l"],
+                itemName: ["l◁", "▶ll", "▷l"],
                 isItemSelectBorderEn: 1
             })
         })
@@ -139,7 +138,13 @@ async function createView(songIn: Song) {
                 console.log("Layout config changed, rebuilding page container...");
                 const rebuildContainer = new RebuildPageContainer(containerConfig);
                 await bridge.rebuildPageContainer(rebuildContainer);
+
+                // Add a small delay so the glasses have time to clear the screen 
+                // and parse the new container before we bombard them with the image
+                await new Promise(r => setTimeout(r, 300));
+
                 lastConfig = currentLayoutStr;
+                lastSongID = ""; // Force image resend after rebuild
             } else {
                 // If config hasn't changed, try to just upgrade the text content
                 // This avoids clearing the screen/image
@@ -163,6 +168,7 @@ async function createView(songIn: Song) {
                 }
             }
             // Only update image if it has changed
+            //console.log(`Album art check - current length: ${songIn.albumArtRaw?.length}, songID: ${songIn.songID}, lastSongID: ${lastSongID}`);
             if (songIn.albumArtRaw && songIn.albumArtRaw.length > 0 && songIn.songID !== lastSongID) {
                 try {
                     await bridge.updateImageRawData(new ImageRawDataUpdate({
@@ -175,6 +181,8 @@ async function createView(songIn: Song) {
                 } catch (e) {
                     console.error("Failed to update image data:", e);
                 }
+            } else if (songIn.songID !== lastSongID) {
+                console.log(`Skipped image update due to missing or empty raw data for songID ${songIn.songID}`);
             }
         }
     } catch (e) {

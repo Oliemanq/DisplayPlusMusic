@@ -169,9 +169,13 @@ class SpotifyModel {
             return song_placeholder;
         }
 
-        // No item means nothing is playing.
+        // No item means nothing is playing, or it's paused and Spotify isn't returning it.
         if (!result || !result.item) {
             //console.log("User is not playing anything currently.");
+            if (this.lastSong && this.lastSong.songID !== "0") {
+                this.lastSong.addisPlaying(false);
+                return this.lastSong;
+            }
             return song_placeholder;
         }
 

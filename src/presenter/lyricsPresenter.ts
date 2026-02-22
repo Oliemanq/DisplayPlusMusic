@@ -83,9 +83,13 @@ class LyricsPresenter {
         if (currentIndex === -1) {
             this.currentLine = "";
             this.nextLine = parsedLines.length > 0 ? `[${formatTime(parsedLines[0].time)}] ${parsedLines[0].text}` : "";
+            document.getElementById('current-lyric-line')!.textContent = this.currentLine;
+            document.getElementById('next-lyric-line')!.textContent = this.nextLine;
         } else {
             this.currentLine = `[${formatTime(parsedLines[currentIndex].time)}] ${parsedLines[currentIndex].text}`;
             this.nextLine = currentIndex + 1 < parsedLines.length ? `[${formatTime(parsedLines[currentIndex + 1].time)}] ${parsedLines[currentIndex + 1].text}` : "";
+            document.getElementById('current-lyric-line')!.textContent = this.currentLine;
+            document.getElementById('next-lyric-line')!.textContent = this.nextLine;
         }
     }
 }

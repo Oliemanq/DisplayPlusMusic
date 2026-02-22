@@ -1,10 +1,13 @@
 import Song from './songModel';
 
 async function fetchLyrics(song: Song) {
-    if (!song.title || song.title === "None") return {
-        plainLyrics: "No lyrics found",
-        syncedLyrics: "[0:00.00] No lyrics found \n[0:30.00] \n[1:00.00] "
-    };
+    if (song.title == "No Song Found") {
+        console.error("No song found");
+        return {
+            plainLyrics: "",
+            syncedLyrics: ""
+        }
+    }
 
     const url = new URL("https://lrclib.net/api/get");
     url.searchParams.append("track_name", song.title);

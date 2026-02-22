@@ -44,7 +44,7 @@ async function createView(songIn: Song) {
             containerName: 'album-art',
         });
 
-        const isPaused = songIn.isPlaying ? "  || " : " |> ";
+        const isPaused = songIn.isPlaying ? "  || " : " ▶";
         const buttons = new ListContainerProperty({
             xPosition: 110,
             yPosition: 0,
@@ -58,7 +58,7 @@ async function createView(songIn: Song) {
             itemContainer: new ListItemContainerProperty({
                 itemCount: 3,
                 itemWidth: 52,
-                itemName: ["  < ", isPaused, "  > "],
+                itemName: ["l◁", isPaused, "▷l"],
                 isItemSelectBorderEn: 1
             })
         })

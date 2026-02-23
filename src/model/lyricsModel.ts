@@ -4,8 +4,8 @@ async function fetchLyrics(song: Song) {
     if (song.title == "No Song Found") {
         console.error("No song found");
         return {
-            plainLyrics: "",
-            syncedLyrics: ""
+            plainLyrics: null,
+            syncedLyrics: null
         }
     }
 
@@ -25,8 +25,8 @@ async function fetchLyrics(song: Song) {
         if (!response.ok) {
             console.log(`Lyrics not found for ${song.title} (${response.status})`);
             return {
-                plainLyrics: "No lyrics found",
-                syncedLyrics: "[0:00.00] No lyrics found \n[0:15.00] "
+                plainLyrics: null,
+                syncedLyrics: null
             };
         }
 
@@ -40,8 +40,8 @@ async function fetchLyrics(song: Song) {
     } catch (e) {
         console.error("Failed to fetch lyrics:", e);
         return {
-            plainLyrics: "No lyrics found",
-            syncedLyrics: "[0:00.00] No lyrics found \n[0:30.00] \n[1:00.00] "
+            plainLyrics: null,
+            syncedLyrics: null
         };
     }
 }

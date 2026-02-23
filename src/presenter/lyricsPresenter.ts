@@ -47,8 +47,10 @@ class LyricsPresenter {
 
     async updateLyricsLine() {
         if (!spotifyPresenter.currentSong || !this.currentTrackSyncedLyrics) {
-            this.currentLine = "";
+            this.currentLine = "No Lyrics Found";
             this.nextLine = "";
+            document.getElementById('current-lyric-line')!.textContent = this.currentLine;
+            document.getElementById('next-lyric-line')!.textContent = this.nextLine;
             return;
         }
 
@@ -69,6 +71,7 @@ class LyricsPresenter {
 
         // Bluetooth delay in seconds (100ms = 0.1s)
         const BLUETOOTH_DELAY = 0.1;
+
         const progress = Math.max(0, spotifyPresenter.currentSong.progressSeconds - BLUETOOTH_DELAY);
         let currentIndex = -1;
 

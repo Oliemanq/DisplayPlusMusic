@@ -7,7 +7,7 @@ import { fetchLyrics } from './model/lyricsModel';
 import pollingPresenter from './presenter/pollingPresenter';
 
 async function main() {
-    enableMobileConsole();
+    // enableMobileConsole();
     console.log("App starting...");
     await initSpotify();
 

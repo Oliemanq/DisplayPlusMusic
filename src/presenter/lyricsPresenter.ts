@@ -60,12 +60,15 @@ class LyricsPresenter {
         for (const line of lines) {
             const match = line.match(/^\s*\[(\d+):(\d+(?:\.\d+)?)\](.*)/);
             if (match) {
-                const minutes = parseInt(match[1]);
-                const seconds = parseFloat(match[2]);
-                parsedLines.push({
-                    time: minutes * 60 + seconds,
-                    text: match[3]
-                });
+                const text = match[3].trim();
+                if (text) {
+                    const minutes = parseInt(match[1]);
+                    const seconds = parseFloat(match[2]);
+                    parsedLines.push({
+                        time: minutes * 60 + seconds,
+                        text: text
+                    });
+                }
             }
         }
 

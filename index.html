@@ -84,7 +84,7 @@
         <button class="button" id="play-pause">Play/Pause</button>
         <button class="button" id="skip-track">Skip track</button>
     </span>
-    <span class="container">
+    <span class="container" id="lyrics-container">
         <p id='current-lyric-line'></p>
         <p id='next-lyric-line'></p>
     </span>
@@ -269,7 +269,8 @@
             gap: 12px;
         }
 
-        #album-art-container {
+        #album-art-container,
+        #lyrics-container {
             margin: 12px;
             padding-left: 48px;
             border-radius: 6px;
@@ -279,6 +280,10 @@
             justify-content: left;
             font-size: 24px;
             background-color: var(--button-foreground-light);
+        }
+
+        #lyrics-container {
+            flex-direction: column;
         }
 
         .subcontainer {

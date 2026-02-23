@@ -91,7 +91,7 @@ class Song {
         while ((dashCount * dashWidth) + (underscoreCount * underscoreWidth) > maxWidthTrue) {
             dashCount -= 1;
         }
-        return "<" + "-".repeat(dashCount) + this.isPlaying ? ">" : "||" + "_".repeat(underscoreCount) + ">";
+        return "<" + "-".repeat(dashCount) + (this.isPlaying ? ">" : "||") + "_".repeat(underscoreCount) + ">";
     }
 }
 

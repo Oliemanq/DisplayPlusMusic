@@ -156,10 +156,12 @@ class SpotifyModel {
     async fetchCurrentTrack(): Promise<Song> {
         let result;
         try {
-            result = await spotifysdk.player.getCurrentlyPlayingTrack();
+            result = await spotifysdk.player.getPlaybackState();
             if (result && result.device && result.device.id) {
-                console.log("Updated device ID from " + this.deviceId + " to " + result.device.id);
-                this.deviceId = result.device.id;
+                if (this.deviceId !== result.device.id) {
+                    console.log("Updated device ID from " + this.deviceId + " to " + result.device.id);
+                    this.deviceId = result.device.id;
+                }
             }
         } catch (err: any) {
             console.error("Failed to fetch current track:", err.message || String(err));
@@ -270,6 +272,9 @@ class SpotifyModel {
 
     async song_Pause() {
         try {
+            if (this.currentSong) {
+                this.currentSong.addisPlaying(false);
+            }
             await spotifysdk.player.pausePlayback(this.deviceId);
         } catch (e) {
             console.error("Failed to pause playback:", e);
@@ -278,6 +283,9 @@ class SpotifyModel {
 
     async song_Play() {
         try {
+            if (this.currentSong) {
+                this.currentSong.addisPlaying(true);
+            }
             await spotifysdk.player.startResumePlayback(this.deviceId);
         } catch (e) {
             console.error("Failed to play playback:", e);

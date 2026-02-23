@@ -81,7 +81,7 @@ class Song {
         let barWidth = maxWidth / maxVerticalBar;
         let arrowWidth = maxWidth / maxArrows;
 
-        let maxWidthTrue = maxWidth - (arrowWidth * 2) - (this.isPlaying ? 0 : barWidth * 2);
+        let maxWidthTrue = maxWidth - (arrowWidth * 2) - (this.isPlaying ? 0 : barWidth * 3);
 
         let maxDashCount = Math.floor(progressPercent * maxDashes);
         let maxUnderscoreCount = Math.floor((1 - progressPercent) * maxUnderscores);
@@ -91,7 +91,7 @@ class Song {
         while ((dashCount * dashWidth) + (underscoreCount * underscoreWidth) > maxWidthTrue) {
             dashCount -= 1;
         }
-        return (this.isPlaying ? "" : "||") + "<" + "-".repeat(dashCount) + "|" + "_".repeat(underscoreCount) + ">";
+        return (this.isPlaying ? "" : "|| ") + "<" + "-".repeat(dashCount) + "|" + "_".repeat(underscoreCount) + ">";
     }
 }
 

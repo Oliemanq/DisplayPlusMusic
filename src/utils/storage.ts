@@ -5,14 +5,27 @@
 
 export const storage = {
     setItem: async (key: string, value: string): Promise<void> => {
-        window.localStorage.setItem(key, value);
+        try {
+            window.localStorage.setItem(key, value);
+        } catch (e) {
+            console.warn('localStorage.setItem failed:', e);
+        }
         return Promise.resolve();
     },
     getItem: async (key: string): Promise<string | null> => {
-        return Promise.resolve(window.localStorage.getItem(key));
+        try {
+            return Promise.resolve(window.localStorage.getItem(key));
+        } catch (e) {
+            console.warn('localStorage.getItem failed:', e);
+            return Promise.resolve(null);
+        }
     },
     removeItem: async (key: string): Promise<void> => {
-        window.localStorage.removeItem(key);
+        try {
+            window.localStorage.removeItem(key);
+        } catch (e) {
+            console.warn('localStorage.removeItem failed:', e);
+        }
         return Promise.resolve();
     }
 };

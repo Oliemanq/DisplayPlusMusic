@@ -7,6 +7,9 @@ export default defineConfig(({ command, mode }) => {
   return {
     server: {
       host: '0.0.0.0',
+      allowedHosts: [
+        'archhyprland',
+      ]
     },
     // If Even Hub, use relative paths ('./'). 
     // Otherwise, fallback to your GitHub pages logic.

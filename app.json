@@ -2,26 +2,29 @@
   "package_id": "com.oliemanq.displayplusmusic",
   "edition": "202601",
   "name": "DisplayPlus Music",
-  "version": "1.4.0",
+  "author": "oliemanq",
+  "version": "1.5.0",
   "min_app_version": "2.1.0",
   "min_sdk_version": "0.0.9",
   "entrypoint": "index.html",
+  "tagline": "Music player for Even Hub",
+  "description": "DisplayPlus Music is a music player for Even Hub that can play music from Spotify, with more coming in the future.",
   "permissions": [
     {
       "name": "network",
-      "desc": "This is needed to access Spotify's API's",
+      "desc": "This app needs to access the network in order to get music information and lyrics.",
       "whitelist": [
-        "https://evenhub.evenrealities.com",
-        "https://api.spotify.com/v1/*",
-        "https://accounts.spotify.com/*",
-        "https://encore.scdn.co/*",
-        "https://apresolve.spotify.com/*",
-        "https://gue1-spclient.spotify.com/*",
-        "https://accounts.scdn.co/*",
-        "https://sdk.scdn.co/*",
-        "https://i.scdn.co/*",
-        "https://*.spotifycdn.com/*",
-        "https://lrclib.net/*"
+        "evenhub.evenrealities.com",
+        "api.spotify.com",
+        "accounts.spotify.com",
+        "encore.scdn.co",
+        "apresolve.spotify.com",
+        "gue1-spclient.spotify.com",
+        "accounts.scdn.co",
+        "sdk.scdn.co",
+        "i.scdn.co",
+        "*.spotifycdn.com",
+        "lrclib.net"
       ]
     }
   ],

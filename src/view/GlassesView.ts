@@ -27,6 +27,70 @@ let isUpdating = false;
 let isSendingImage = false;
 let lastSongID = "";
 let imageRetryAt = 0;
+let blanked = false;
+let forceRebuild = false;
+
+function devlog(level: 'INFO' | 'WARN', tag: string, msg: string) {
+    const ts = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+    console.log(`[${ts} ${level}  ${tag}] ${msg}`);
+}
+
+export function isScreenBlanked(): boolean {
+    return blanked;
+}
+
+function buildBlankConfig() {
+    return {
+        containerTotalNum: 1,
+        textObject: [
+            new TextContainerProperty({
+                xPosition: 0,
+                yPosition: 0,
+                width: MAX_WIDTH,
+                height: MAX_HEIGHT,
+                borderWidth: 0,
+                borderRadius: 0,
+                containerID: 9,
+                containerName: 'blank',
+                content: ' ',
+                isEventCapture: 1,
+            }),
+        ],
+    };
+}
+
+export async function blankScreen(): Promise<void> {
+    if (blanked) return;
+    blanked = true;
+    try {
+        if (!bridge) {
+            bridge = await withTimeout(waitForEvenAppBridge(), 3000, null);
+            if (!bridge) return;
+        }
+        await withTimeout(
+            bridge.rebuildPageContainer(new RebuildPageContainer(buildBlankConfig())),
+            5000,
+            false,
+        );
+        // Force fresh rebuild + image resend on next unblank
+        isPageCreated = false;
+        lastSongID = '';
+        imageRetryAt = 0;
+        devlog('INFO', 'GlassesView', 'screen blanked (rebuild to single empty text container)');
+    } catch (e) {
+        console.error('[GlassesView] blankScreen error:', e);
+    }
+}
+
+export function unblankScreen(): void {
+    if (!blanked) return;
+    blanked = false;
+    isPageCreated = true; // blank page exists; createView must skip createStartUpPageContainer
+    forceRebuild = true;  // next createView must rebuildPageContainer with normal config
+    lastSongID = '';
+    imageRetryAt = 0;
+    devlog('INFO', 'GlassesView', 'screen unblanked (forcing rebuild on next poll tick)');
+}
 
 /** Resolves with fallback value if the promise times out or throws. */
 function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
@@ -132,6 +196,7 @@ async function sendImageAsync(song: Song): Promise<void> {
 }
 
 export async function createView(song: Song): Promise<void> {
+    if (blanked) return;
     if (isUpdating) return;
     isUpdating = true;
 
@@ -169,6 +234,26 @@ export async function createView(song: Song): Promise<void> {
             } else {
                 // oversize or outOfMemory — can't recover, don't mark as created
                 console.error('[GlassesView] Fatal container error:', result);
+                return;
+            }
+        }
+
+        // Wake-from-blank: rebuild full layout before any text upgrade
+        if (forceRebuild) {
+            devlog('INFO', 'GlassesView', 'wake rebuild → rebuildPageContainer(normal config)');
+            const rebuilt = await withTimeout(
+                bridge.rebuildPageContainer(new RebuildPageContainer(config)),
+                5000,
+                false,
+            );
+            if (rebuilt) {
+                forceRebuild = false;
+                lastSongID = '';
+                imageRetryAt = 0;
+                // Let firmware settle before next text upgrade
+                await new Promise(r => setTimeout(r, 300));
+            } else {
+                devlog('WARN', 'GlassesView', 'wake rebuild failed; will retry next tick');
                 return;
             }
         }

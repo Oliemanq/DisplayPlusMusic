@@ -30,11 +30,6 @@ let imageRetryAt = 0;
 let blanked = false;
 let forceRebuild = false;
 
-function devlog(level: 'INFO' | 'WARN', tag: string, msg: string) {
-    const ts = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
-    console.log(`[${ts} ${level}  ${tag}] ${msg}`);
-}
-
 export function isScreenBlanked(): boolean {
     return blanked;
 }
@@ -76,7 +71,7 @@ export async function blankScreen(): Promise<void> {
         isPageCreated = false;
         lastSongID = '';
         imageRetryAt = 0;
-        devlog('INFO', 'GlassesView', 'screen blanked (rebuild to single empty text container)');
+        console.log('[GlassesView] screen blanked');
     } catch (e) {
         console.error('[GlassesView] blankScreen error:', e);
     }
@@ -89,7 +84,7 @@ export function unblankScreen(): void {
     forceRebuild = true;  // next createView must rebuildPageContainer with normal config
     lastSongID = '';
     imageRetryAt = 0;
-    devlog('INFO', 'GlassesView', 'screen unblanked (forcing rebuild on next poll tick)');
+    console.log('[GlassesView] screen unblanked');
 }
 
 /** Resolves with fallback value if the promise times out or throws. */
@@ -240,7 +235,6 @@ export async function createView(song: Song): Promise<void> {
 
         // Wake-from-blank: rebuild full layout before any text upgrade
         if (forceRebuild) {
-            devlog('INFO', 'GlassesView', 'wake rebuild → rebuildPageContainer(normal config)');
             const rebuilt = await withTimeout(
                 bridge.rebuildPageContainer(new RebuildPageContainer(config)),
                 5000,
@@ -250,10 +244,8 @@ export async function createView(song: Song): Promise<void> {
                 forceRebuild = false;
                 lastSongID = '';
                 imageRetryAt = 0;
-                // Let firmware settle before next text upgrade
                 await new Promise(r => setTimeout(r, 300));
             } else {
-                devlog('WARN', 'GlassesView', 'wake rebuild failed; will retry next tick');
                 return;
             }
         }

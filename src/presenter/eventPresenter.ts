@@ -26,7 +26,7 @@ export async function eventHandler() {
             const eventType = event.sysEvent.eventType;
             if (eventType == OsEventTypeList.DOUBLE_CLICK_EVENT) {
                 console.log('double tap event, shutting down app');
-                bridge.shutDownPageContainer();
+                bridge.shutDownPageContainer(1);
             }
         }
     });

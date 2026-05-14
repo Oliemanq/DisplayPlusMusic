@@ -118,10 +118,10 @@ class Song {
 }
 
 let song_placeholder = new Song();
-song_placeholder.addTitle("");
-song_placeholder.addArtist("No Song Found");
+song_placeholder.addTitle("No Song Found");
+song_placeholder.addArtist("   Please log in via");
 song_placeholder.addFeatures([""]);
-song_placeholder.addAlbum("");
+song_placeholder.addAlbum("   the Even App");
 song_placeholder.addID("0");
 song_placeholder.addProgressSeconds(30);
 song_placeholder.addDurationSeconds(60);

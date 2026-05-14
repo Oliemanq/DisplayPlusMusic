@@ -17,6 +17,9 @@ export function enableMobileConsole() {
     document.body.appendChild(consoleDiv);
 
     const logToScreen = (message: any, color: string = '#0f0') => {
+        if (message.toString().includes("Flutter Bridge")) {
+            return;
+        }
         const line = document.createElement('div');
         line.style.color = color;
         line.style.borderBottom = '1px solid #333';
@@ -35,6 +38,7 @@ export function enableMobileConsole() {
 
         consoleDiv.appendChild(line);
         consoleDiv.scrollTop = consoleDiv.scrollHeight;
+
     };
 
     const originalLog = console.log;

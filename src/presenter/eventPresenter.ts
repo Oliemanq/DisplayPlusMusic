@@ -1,4 +1,4 @@
-import { List_ItemEvent, EvenHubEvent, EvenHubEventType, evenHubEventFromJson, waitForEvenAppBridge } from "@evenrealities/even_hub_sdk";
+import { List_ItemEvent, EvenHubEvent, EvenHubEventType, evenHubEventFromJson, waitForEvenAppBridge, OsEventTypeList } from "@evenrealities/even_hub_sdk";
 import spotifyPresenter from './spotifyPresenter';
 
 
@@ -19,12 +19,11 @@ export async function eventHandler() {
                     spotifyPresenter.song_back();
                     break;
             }
-        } else if (event.textEvent) {
-            console.log(event.textEvent.eventType);
-        } else if (event.sysEvent) {
-            console.log(event.sysEvent.eventType);
-        } else {
-            console.log("Audio event");
+        }
+
+        if (event.textEvent?.eventType == OsEventTypeList.DOUBLE_CLICK_EVENT) {
+            console.log('double tap event, shutting down app');
+            bridge.shutDownPageContainer();
         }
     });
 

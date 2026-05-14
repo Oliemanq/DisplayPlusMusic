@@ -5,7 +5,7 @@ import spotifyPresenter from './spotifyPresenter';
 export async function eventHandler() {
     const bridge = await waitForEvenAppBridge();
 
-    const unsubscribe = bridge.onEvenHubEvent((event) => {
+    const unsubscribe = bridge.onEvenHubEvent(async (event) => {
         const listEvent = event.listEvent;
         const sysEvent = event.sysEvent;
         if (listEvent) {
@@ -26,7 +26,33 @@ export async function eventHandler() {
             const eventType = event.sysEvent.eventType;
             if (eventType == OsEventTypeList.DOUBLE_CLICK_EVENT) {
                 console.log('double tap event, shutting down app');
-                bridge.shutDownPageContainer(1);
+                if (await bridge.shutDownPageContainer(1)) {
+                    console.log("successfull shutdown");
+                    console.log("successfull shutdown");
+                    console.log("successfull shutdown");
+                    console.log("successfull shutdown");
+                    console.log("successfull shutdown");
+                    console.log("successfull shutdown");
+                    console.log("successfull shutdown");
+                    console.log("successfull shutdown");
+                    console.log("successfull shutdown");
+                    console.log("successfull shutdown");
+                    console.log("successfull shutdown");
+                    console.log("successfull shutdown");
+                } else {
+                    console.log("failed shutdown");
+                    console.log("failed shutdown");
+                    console.log("failed shutdown");
+                    console.log("failed shutdown");
+                    console.log("failed shutdown");
+                    console.log("failed shutdown");
+                    console.log("failed shutdown");
+                    console.log("failed shutdown");
+                    console.log("failed shutdown");
+                    console.log("failed shutdown");
+                    console.log("failed shutdown");
+                    console.log("failed shutdown");
+                }
             }
         }
     });

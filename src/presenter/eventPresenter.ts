@@ -6,9 +6,11 @@ export async function eventHandler() {
     const bridge = await waitForEvenAppBridge();
 
     const unsubscribe = bridge.onEvenHubEvent((event) => {
-        if (event.listEvent) {
-            console.log(event.listEvent.currentSelectItemIndex + " " + event.listEvent.currentSelectItemName);
-            switch (event.listEvent.currentSelectItemIndex) {
+        const listEvent = event.listEvent;
+        const sysEvent = event.sysEvent;
+        if (listEvent) {
+            console.log(listEvent.currentSelectItemIndex + " " + listEvent.currentSelectItemName);
+            switch (listEvent.currentSelectItemIndex) {
                 case 1:
                     spotifyPresenter.song_pauseplay();
                     break;
@@ -20,10 +22,12 @@ export async function eventHandler() {
                     break;
             }
         }
-
-        if (event.textEvent?.eventType == OsEventTypeList.DOUBLE_CLICK_EVENT) {
-            console.log('double tap event, shutting down app');
-            bridge.shutDownPageContainer();
+        if (event.sysEvent) {
+            const eventType = event.sysEvent.eventType;
+            if (eventType == OsEventTypeList.DOUBLE_CLICK_EVENT) {
+                console.log('double tap event, shutting down app');
+                bridge.shutDownPageContainer();
+            }
         }
     });
 

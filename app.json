@@ -3,7 +3,7 @@
   "edition": "202601",
   "name": "DisplayPlus Music",
   "author": "oliemanq",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "min_app_version": "2.1.0",
   "min_sdk_version": "0.0.9",
   "entrypoint": "index.html",
@@ -14,17 +14,10 @@
       "name": "network",
       "desc": "This app needs to access the network in order to get music information and lyrics.",
       "whitelist": [
-        "evenhub.evenrealities.com",
-        "api.spotify.com",
-        "accounts.spotify.com",
-        "encore.scdn.co",
-        "apresolve.spotify.com",
-        "gue1-spclient.spotify.com",
-        "accounts.scdn.co",
-        "sdk.scdn.co",
-        "i.scdn.co",
-        "*.spotifycdn.com",
-        "lrclib.net"
+        "https://accounts.spotify.com/*",
+        "https://api.spotify.com/v1/*",
+        "i.scdn.co*",
+        "lrclib.net*"
       ]
     }
   ],

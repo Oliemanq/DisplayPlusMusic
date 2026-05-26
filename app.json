@@ -3,7 +3,7 @@
   "edition": "202601",
   "name": "DisplayPlus Music",
   "author": "oliemanq",
-  "version": "1.5.2",
+  "version": "1.5.4",
   "min_app_version": "2.1.0",
   "min_sdk_version": "0.0.9",
   "entrypoint": "index.html",
@@ -14,10 +14,18 @@
       "name": "network",
       "desc": "This app needs to access the network in order to get music information and lyrics.",
       "whitelist": [
-        "https://accounts.spotify.com/*",
-        "https://api.spotify.com/v1/*",
-        "i.scdn.co*",
-        "lrclib.net*"
+        "https://oliemanq.github.io/DisplayPlusMusic",
+        "https://oliemanq.github.io/DisplayPlusMusic/",
+        "https://accounts.spotify.com/authorize",
+        "https://accounts.spotify.com/api/token",
+        "https://api.spotify.com/v1/me/player",
+        "https://api.spotify.com/v1/me/player/queue",
+        "https://api.spotify.com/v1/me/player/play",
+        "https://api.spotify.com/v1/me/player/pause",
+        "https://api.spotify.com/v1/me/player/next",
+        "https://api.spotify.com/v1/me/player/previous",
+        "https://i.scdn.co",
+        "https://lrclib.net/api/get"
       ]
     }
   ],

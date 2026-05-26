@@ -1,9 +1,9 @@
 import spotifyModel, { initSpotify } from '../model/spotifyModel';
-import Song from '../model/songModel';
+import Song, { song_placeholder } from '../model/songModel';
 import { waitForEvenAppBridge } from '@evenrealities/even_hub_sdk';
 
 class SpotifyPresenter {
-    currentSong?: Song;
+    currentSong: Song = song_placeholder;
     nextSong?: Song;
 
     async pollSingle() {

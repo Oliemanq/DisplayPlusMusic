@@ -1,5 +1,6 @@
 import { SpotifyApi, Track, Episode } from '@spotify/web-api-ts-sdk';
 import Song, { song_placeholder } from '../model/songModel';
+import { setPlaceholderLoginHint } from '../model/songModel';
 import { downloadImageAsGrayscalePng, downloadImage } from './imageModel';
 import { storage } from '../utils/storage';
 import spotifyAuthModel from './spotifyAuthModel';
@@ -21,6 +22,7 @@ export async function initSpotify(): Promise<void> {
 
     if (!clientId || !clientSecret) {
         console.error('Spotify credentials not set');
+        setPlaceholderLoginHint(true);
         return;
     }
 
@@ -54,9 +56,12 @@ export async function initSpotify(): Promise<void> {
             authData = await exchangeRefreshToken(refreshToken);
         } else {
             console.error('No auth data available');
+            setPlaceholderLoginHint(true);
             document.getElementById('spotify-auth-popup')!.style.display = 'flex';
             return;
         }
+
+        setPlaceholderLoginHint(false);
 
         // Persist rotated refresh token if Spotify issued a new one
         if (authData.refresh_token && authData.refresh_token !== refreshToken) {
@@ -75,6 +80,7 @@ export async function initSpotify(): Promise<void> {
         console.log('Spotify SDK initialized.');
     } catch (e) {
         console.error('Spotify auth error:', e);
+        setPlaceholderLoginHint(true);
         document.getElementById('spotify-auth-popup')!.style.display = 'flex';
     }
 }

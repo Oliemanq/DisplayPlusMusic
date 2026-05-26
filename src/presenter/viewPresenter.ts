@@ -87,7 +87,6 @@ class ViewPresenter {
     }
 
     async saveAndAuthorize() {
-        alert("Save pressed");
         const clientId = (document.getElementById('client-id') as HTMLInputElement).value.trim();
         const clientSecret = (document.getElementById('client-secret') as HTMLInputElement).value.trim();
 
@@ -99,7 +98,7 @@ class ViewPresenter {
         await storage.setItem('spotify_client_id', clientId);
         await storage.setItem('spotify_client_secret', clientSecret);
 
-        spotifyAuthModel.generateAuthUrl(clientId);
+        await spotifyAuthModel.generateAuthUrl(clientId);
     }
 
     async clearLocalStorage() {

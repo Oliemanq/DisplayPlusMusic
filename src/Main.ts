@@ -7,14 +7,16 @@ import pollingPresenter from './presenter/pollingPresenter';
 import viewPresenter from './presenter/viewPresenter';
 
 async function main() {
-    // enableMobileConsole();
+    enableMobileConsole();
     console.log("App starting...");
 
     viewPresenter.initListeners();
 
+    pollingPresenter.startPolling();
+
+
     await initSpotify();
 
-    pollingPresenter.startPolling();
     eventHandler();
 
     const currentSong = await spotifyPresenter.fetchCurrentSong();

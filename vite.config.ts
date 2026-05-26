@@ -11,9 +11,9 @@ export default defineConfig(({ command, mode }) => {
         'archhyprland',
       ]
     },
-    // If Even Hub, use relative paths ('./'). 
-    // Otherwise, fallback to your GitHub pages logic.
-    base: isEvenHubBuild ? './' : (command === 'serve' ? '/' : '/DisplayPlusMusic/'),
+    // Use relative paths for every built artifact so the app works from the
+    // local Even Hub package as well as from GitHub Pages.
+    base: command === 'serve' ? '/' : './',
 
     // Only inject the single-file plugin if we are building for the glasses
     plugins: isEvenHubBuild ? [viteSingleFile()] : [],

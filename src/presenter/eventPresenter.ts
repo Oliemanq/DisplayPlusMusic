@@ -10,6 +10,9 @@ export async function eventHandler() {
         const sysEvent = event.sysEvent;
         if (listEvent) {
             console.log(listEvent.currentSelectItemIndex + " " + listEvent.currentSelectItemName);
+            if (spotifyPresenter.getActiveSource() === 'navidrome') {
+                return;
+            }
             switch (listEvent.currentSelectItemIndex) {
                 case 1:
                     spotifyPresenter.song_pauseplay();

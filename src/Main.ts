@@ -1,4 +1,3 @@
-import { initSpotify } from './model/spotifyModel';
 import spotifyPresenter from './presenter/spotifyPresenter';
 import { eventHandler } from './presenter/eventPresenter';
 import { enableMobileConsole } from './Scripts/debugConsole';
@@ -12,10 +11,9 @@ async function main() {
 
     viewPresenter.initListeners();
 
+    await spotifyPresenter.initActiveSource();
+
     pollingPresenter.startPolling();
-
-
-    await initSpotify();
 
     eventHandler();
 

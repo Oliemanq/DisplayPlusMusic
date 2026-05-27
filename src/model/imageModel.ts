@@ -54,7 +54,18 @@ class ImageModel {
       throw new Error('Could not get canvas context');
     }
 
-    // Draw image to fit the target dimensions
+    // Enable smoothing to avoid pixelation when scaling
+    try {
+      // Some contexts (OffscreenCanvas) support these properties
+      // @ts-ignore
+      ctx.imageSmoothingEnabled = true;
+      // @ts-ignore
+      ctx.imageSmoothingQuality = 'high';
+    } catch (e) {
+      // Ignore if context doesn't expose these properties
+    }
+
+    // Draw image to fit the target dimensions (with smoothing)
     ctx.drawImage(bitmap, 0, 0, width, height);
 
     const pngBlob = await new Promise<Blob>((resolve, reject) => {
@@ -136,8 +147,17 @@ class ImageModel {
     if (!ctx) {
       throw new Error('Could not get canvas context');
     }
+    // Enable smoothing to avoid pixelation when scaling
+    try {
+      // @ts-ignore
+      ctx.imageSmoothingEnabled = true;
+      // @ts-ignore
+      ctx.imageSmoothingQuality = 'high';
+    } catch (e) {
+      // Ignore if context doesn't expose these properties
+    }
 
-    // Draw image to fit the target dimensions
+    // Draw image to fit the target dimensions (with smoothing)
     ctx.drawImage(bitmap, 0, 0, width, height);
     const imageData = ctx.getImageData(0, 0, width, height);
     const data = imageData.data;

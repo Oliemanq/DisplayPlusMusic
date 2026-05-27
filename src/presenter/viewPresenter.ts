@@ -11,6 +11,18 @@ class ViewPresenter {
     constructor() { }
 
     initListeners() {
+        const sourceSelect = document.getElementById('music-source') as HTMLSelectElement | null;
+        const spotifyFields = document.getElementById('spotify-auth-fields');
+        const navidromeFields = document.getElementById('navidrome-auth-fields');
+
+        const toggleAuthFields = () => {
+            const source = sourceSelect?.value || 'spotify';
+            if (spotifyFields) spotifyFields.style.display = source === 'spotify' ? 'flex' : 'none';
+            if (navidromeFields) navidromeFields.style.display = source === 'navidrome' ? 'flex' : 'none';
+        };
+
+        sourceSelect?.addEventListener('change', toggleAuthFields);
+
         // Media Controls
         document.getElementById('skip-track')?.addEventListener('click', () => {
             this.forwardTrack();
@@ -42,6 +54,30 @@ class ViewPresenter {
             if (clientSecretInput && val) {
                 clientSecretInput.value = val;
             }
+        });
+        storage.getItem('navidrome_base_url').then(val => {
+            const input = document.getElementById('navidrome-base-url') as HTMLInputElement;
+            if (input && val) {
+                input.value = val;
+            }
+        });
+        storage.getItem('navidrome_username').then(val => {
+            const input = document.getElementById('navidrome-username') as HTMLInputElement;
+            if (input && val) {
+                input.value = val;
+            }
+        });
+        storage.getItem('navidrome_password').then(val => {
+            const input = document.getElementById('navidrome-password') as HTMLInputElement;
+            if (input && val) {
+                input.value = val;
+            }
+        });
+        storage.getItem('music_source').then(val => {
+            if (sourceSelect && val) {
+                sourceSelect.value = val;
+            }
+            toggleAuthFields();
         });
 
         // Make popup links copyable
@@ -87,6 +123,27 @@ class ViewPresenter {
     }
 
     async saveAndAuthorize() {
+        const selectedSource = ((document.getElementById('music-source') as HTMLSelectElement | null)?.value || 'spotify') as 'spotify' | 'navidrome';
+        await storage.setItem('music_source', selectedSource);
+
+        if (selectedSource === 'navidrome') {
+            const baseUrl = (document.getElementById('navidrome-base-url') as HTMLInputElement).value.trim();
+            const username = (document.getElementById('navidrome-username') as HTMLInputElement).value.trim();
+            const password = (document.getElementById('navidrome-password') as HTMLInputElement).value;
+
+            if (!baseUrl || !username || !password) {
+                alert('Please provide Navidrome server URL, username, and password.');
+                return;
+            }
+
+            await storage.setItem('navidrome_base_url', baseUrl);
+            await storage.setItem('navidrome_username', username);
+            await storage.setItem('navidrome_password', password);
+
+            window.location.reload();
+            return;
+        }
+
         const clientId = (document.getElementById('client-id') as HTMLInputElement).value.trim();
         const clientSecret = (document.getElementById('client-secret') as HTMLInputElement).value.trim();
 
@@ -108,6 +165,10 @@ class ViewPresenter {
         await storage.removeItem('spotify_client_id');
         await storage.removeItem('spotify_client_secret');
         await storage.removeItem('spotify_auth_state');
+        await storage.removeItem('navidrome_base_url');
+        await storage.removeItem('navidrome_username');
+        await storage.removeItem('navidrome_password');
+        await storage.removeItem('music_source');
         console.log("Spotify session cleared!");
         window.location.reload();
     }

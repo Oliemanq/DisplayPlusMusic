@@ -1,8 +1,15 @@
 import Song from './songModel';
 
 async function fetchLyrics(song: Song) {
-    if (song.title == "") {
-        console.error("No song found");
+    const title = song.title.trim().toLowerCase();
+    const artist = song.artist.trim().toLowerCase();
+
+    if (
+        song.songID === '0' ||
+        title === '' ||
+        title === 'no song found' ||
+        artist.includes('please log in via')
+    ) {
         return {
             plainLyrics: null,
             syncedLyrics: null

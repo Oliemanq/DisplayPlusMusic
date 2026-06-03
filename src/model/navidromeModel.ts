@@ -244,7 +244,7 @@ class NavidromeModel {
 
             const [raw, color] = await Promise.all([
                 downloadImageAsGrayscalePng(url, 100, 100),
-                downloadImage(url, 132, 132),
+                downloadImage(url, 120, 120),
             ]);
 
             if (this.currentSong === song) {

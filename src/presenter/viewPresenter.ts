@@ -25,6 +25,7 @@ class ViewPresenter {
         const spotifyFields = document.getElementById('spotify-auth-fields');
         const navidromeFields = document.getElementById('navidrome-auth-fields');
         const clientList = document.getElementById('navidrome-client-list');
+        const miniButtons = document.getElementById('mini-buttons-container');
 
         const toggleAuthFields = () => {
             const source = sourceSelect?.value || 'spotify';
@@ -32,6 +33,7 @@ class ViewPresenter {
             if (navidromeFields) navidromeFields.style.display = source === 'navidrome' ? 'flex' : 'none';
             const clientPicker = document.getElementById('navidrome-client-picker');
             if (clientPicker) clientPicker.style.display = source === 'navidrome' ? 'flex' : 'none';
+            if (miniButtons) miniButtons.style.display = source === 'navidrome' ? 'none' : 'flex';
         };
 
         sourceSelect?.addEventListener('change', toggleAuthFields);

@@ -14,10 +14,12 @@ class LyricsPresenter {
 
     private currentSongID = '';
     private syncedLyrics = '';
+    private currentLyricsSource: 'local server' | 'web' | '' = '';
 
     private nextSongID = '';
     private nextSyncedLyrics = '';
     private nextPlainLyrics = '';
+    private nextLyricsSource: 'local server' | 'web' | '' = '';
 
     private isFetching = false;
     private currentIndex = 0;
@@ -35,6 +37,7 @@ class LyricsPresenter {
         if (this.nextSongID === song.songID && this.nextSyncedLyrics) {
             this.currentSongID = this.nextSongID;
             this.syncedLyrics = this.nextSyncedLyrics;
+            this.currentLyricsSource = this.nextLyricsSource;
             this.currentIndex = 0;
             this.noLyricsShownUntil = null;
             return;
@@ -43,6 +46,7 @@ class LyricsPresenter {
         // Clear stale lyrics immediately so the display doesn't show wrong song's lines
         this.currentSongID = song.songID;
         this.syncedLyrics = '';
+        this.currentLyricsSource = '';
         this.currentIndex = 0;
         this.currentLine = '';
         this.nextLine = '';
@@ -54,6 +58,7 @@ class LyricsPresenter {
             // Only apply if the song hasn't changed again while fetching
             if (this.currentSongID === song.songID) {
                 this.syncedLyrics = lyrics.syncedLyrics ?? '';
+                this.currentLyricsSource = lyrics.source ?? '';
             }
         } catch (e) {
             console.error('[LyricsPresenter] fetchLyrics error:', e);
@@ -73,9 +78,14 @@ class LyricsPresenter {
             const lyrics = await fetchLyrics(nextSong);
             this.nextSyncedLyrics = lyrics.syncedLyrics ?? '';
             this.nextPlainLyrics = lyrics.plainLyrics ?? '';
+            this.nextLyricsSource = lyrics.source ?? '';
         } catch (e) {
             console.error('[LyricsPresenter] cacheNextLyrics error:', e);
         }
+    }
+
+    getLyricsSourceLabel(): string {
+        return this.currentLyricsSource ? `Lyrics from ${this.currentLyricsSource}` : '';
     }
 
     async updateLyricsLine() {
@@ -158,10 +168,13 @@ class LyricsPresenter {
 
     private setHTML(current: string, next: string) {
         try {
+            const lyricsSourceText = this.getLyricsSourceLabel();
             const el1 = document.getElementById('current-lyric-line');
             const el2 = document.getElementById('next-lyric-line');
+            const el3 = document.getElementById('lyrics-source');
             if (el1) el1.textContent = current;
             if (el2) el2.textContent = next;
+            if (el3) el3.textContent = lyricsSourceText;
         } catch (_) { /* DOM may be unavailable in background */ }
     }
 }

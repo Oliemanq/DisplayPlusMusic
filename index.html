@@ -26,6 +26,13 @@
             <p id="song-total-time" class="song-info"></p>
         </span>
     </span>
+    <section id="navidrome-client-picker" class="container navidrome-client-picker" style="display: none;">
+        <div class="navidrome-client-header">
+            <p class="navidrome-client-title">Follow a Navidrome client</p>
+            <p class="navidrome-client-subtitle">Pick which phone or player this app should follow exclusively.</p>
+        </div>
+        <div id="navidrome-client-list" class="navidrome-client-list"></div>
+    </section>
     <span id="mini-buttons-container" class="container">
         <button class="button" id="previous-track">Previous track</button>
         <button class="button" id="play-pause">Play/Pause</button>
@@ -44,9 +51,9 @@
         <p class="popup-title">
             Music Source Setup Required
         </p>
-        <label class="popup-label" style="width: 100%;">
-            <span class="dropdown-label" style="display: block; padding: 12px 20px;">Source</span>
-            <select class="popup-input" id="music-source" style="height: 96px;">
+        <label class="popup-dropdown">
+            <span class="popup-dropdown-label">Source</span>
+            <select id="music-source" class="popup-select" aria-invalid="false">
                 <option value="spotify">Spotify</option>
                 <option value="navidrome">Navidrome</option>
             </select>
@@ -165,6 +172,60 @@
         .popup-title {
             font-weight: bold;
             font-size: 48px;
+        }
+
+        .popup-dropdown {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            margin: 6px 6px 12px;
+        }
+
+        .popup-dropdown-label {
+            font-size: 22px;
+            color: rgba(35,35,35,0.88);
+            padding-left: 6px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        /* Pill-shaped select matching design guide */
+        .popup-select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 96px;
+            padding: 0 72px 0 28px;
+            box-sizing: border-box;
+            border-radius: 18px;
+            background: var(--surface-strong);
+            border: 1px solid var(--field-border);
+            color: var(--text-dark);
+            font-size: 32px;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+            position: relative;
+            transition: box-shadow 0.12s ease, border-color 0.12s ease, transform 0.06s ease;
+            background-image: linear-gradient(45deg, transparent 50%, rgba(0,0,0,0.66) 50%), linear-gradient(135deg, rgba(0,0,0,0.66) 50%, transparent 50%);
+            background-position: calc(100% - 28px) calc(50% - 8px), calc(100% - 20px) calc(50% - 8px);
+            background-size: 10px 10px, 10px 10px;
+            background-repeat: no-repeat;
+        }
+
+        .popup-select:focus {
+            border-color: var(--field-border-strong);
+            box-shadow: 0 6px 28px rgba(0,0,0,0.10);
+            transform: translateY(-1px);
+        }
+
+        .popup-select[aria-invalid="true"] {
+            border-color: var(--button-foreground-danger);
+            box-shadow: 0 0 0 4px rgba(255,84,84,0.08);
+            background: rgba(255,84,84,0.03);
+            color: var(--button-foreground-danger);
         }
 
         .popup-link {
@@ -302,6 +363,91 @@
             justify-content: space-between;
             font-size: 24px;
             gap: 12px;
+        }
+
+        .navidrome-client-picker {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 16px;
+            padding: 18px;
+            margin-left: 12px;
+            margin-right: 12px;
+            border-radius: 10px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(245,245,245,0.92));
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .navidrome-client-header {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .navidrome-client-title {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .navidrome-client-subtitle {
+            margin: 0;
+            font-size: 20px;
+            color: rgba(35, 35, 35, 0.72);
+        }
+
+        .navidrome-client-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .navidrome-client-card {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+            width: 100%;
+            padding: 18px 20px;
+            border: 1px solid rgba(35, 35, 35, 0.12);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text-dark);
+            cursor: pointer;
+            text-align: left;
+            transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+        }
+
+        .navidrome-client-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+        }
+
+        .navidrome-client-card.selected {
+            border-color: rgba(35, 35, 35, 0.88);
+            box-shadow: inset 0 0 0 2px rgba(35, 35, 35, 0.88);
+        }
+
+        .navidrome-client-name {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .navidrome-client-track {
+            font-size: 20px;
+            opacity: 0.92;
+        }
+
+        .navidrome-client-artist {
+            font-size: 18px;
+            opacity: 0.7;
+        }
+
+        .navidrome-client-empty {
+            margin: 0;
+            padding: 12px 4px;
+            font-size: 20px;
+            color: rgba(35, 35, 35, 0.72);
         }
 
         #album-art-container,

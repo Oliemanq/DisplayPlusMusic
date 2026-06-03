@@ -1,8 +1,18 @@
 import spotifyPresenter from './spotifyPresenter';
+import navidromeModel from '../model/navidromeModel';
 import { storage } from '../utils/storage';
 import spotifyAuthModel from '../model/spotifyAuthModel';
 import Song from '../model/songModel';
 import { formatTime } from '../Scripts/formatTime';
+
+function escapeHtml(value: string): string {
+    return value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
 class ViewPresenter {
     private lastSongID: string = ""
@@ -14,11 +24,14 @@ class ViewPresenter {
         const sourceSelect = document.getElementById('music-source') as HTMLSelectElement | null;
         const spotifyFields = document.getElementById('spotify-auth-fields');
         const navidromeFields = document.getElementById('navidrome-auth-fields');
+        const clientList = document.getElementById('navidrome-client-list');
 
         const toggleAuthFields = () => {
             const source = sourceSelect?.value || 'spotify';
             if (spotifyFields) spotifyFields.style.display = source === 'spotify' ? 'flex' : 'none';
             if (navidromeFields) navidromeFields.style.display = source === 'navidrome' ? 'flex' : 'none';
+            const clientPicker = document.getElementById('navidrome-client-picker');
+            if (clientPicker) clientPicker.style.display = source === 'navidrome' ? 'flex' : 'none';
         };
 
         sourceSelect?.addEventListener('change', toggleAuthFields);
@@ -32,6 +45,18 @@ class ViewPresenter {
         });
         document.getElementById('previous-track')?.addEventListener('click', () => {
             this.backTrack();
+        });
+
+        clientList?.addEventListener('click', async (event) => {
+            const target = event.target as HTMLElement;
+            const button = target.closest('button[data-client-name]') as HTMLButtonElement | null;
+            const clientName = button?.dataset.clientName;
+            if (!clientName) {
+                return;
+            }
+
+            await spotifyPresenter.setNavidromeClient(clientName);
+            this.renderNavidromeClients();
         });
 
         // Auth Controls
@@ -168,6 +193,7 @@ class ViewPresenter {
         await storage.removeItem('navidrome_base_url');
         await storage.removeItem('navidrome_username');
         await storage.removeItem('navidrome_password');
+        await storage.removeItem('navidrome_selected_client');
         await storage.removeItem('music_source');
         console.log("Spotify session cleared!");
         window.location.reload();
@@ -184,6 +210,7 @@ class ViewPresenter {
             setText('song-album', song.album);
             setText('song-current-time', formatTime(song.progressSeconds));
             setText('song-total-time', formatTime(song.durationSeconds));
+            this.renderNavidromeClients();
 
             if (song.songID !== this.lastSongID) {
                 const imgElement = document.getElementById('album-art') as HTMLImageElement;
@@ -198,6 +225,40 @@ class ViewPresenter {
         } catch (e) {
             console.error("[viewPresenter] updateHTML threw:", e);
         }
+    }
+
+    renderNavidromeClients() {
+        const picker = document.getElementById('navidrome-client-picker');
+        const list = document.getElementById('navidrome-client-list');
+        if (!picker || !list) {
+            return;
+        }
+
+        const isNavidrome = spotifyPresenter.getActiveSource() === 'navidrome';
+        picker.style.display = isNavidrome ? 'flex' : 'none';
+        if (!isNavidrome) {
+            list.innerHTML = '';
+            return;
+        }
+
+        const clients = navidromeModel.getPlaybackClients();
+        const selectedClient = navidromeModel.getSelectedPlaybackClient();
+
+        if (clients.length === 0) {
+            list.innerHTML = '<p class="navidrome-client-empty">No active Navidrome clients found.</p>';
+            return;
+        }
+
+        list.innerHTML = clients.map(client => {
+            const isSelected = client.clientName === selectedClient;
+            return `
+                <button class="navidrome-client-card ${isSelected ? 'selected' : ''}" data-client-name="${escapeHtml(client.clientName)}">
+                    <span class="navidrome-client-name">${escapeHtml(client.clientName)}</span>
+                    <span class="navidrome-client-track">${escapeHtml(client.title)}</span>
+                    <span class="navidrome-client-artist">${escapeHtml(client.artist)}</span>
+                </button>
+            `;
+        }).join('');
     }
 }
 

@@ -78,6 +78,15 @@ class SpotifyPresenter {
         }
         spotifyModel.song_Forward();
     }
+
+    async setNavidromeClient(clientName: string) {
+        if (this.activeSource !== 'navidrome') {
+            return;
+        }
+
+        await navidromeModel.setSelectedPlaybackClient(clientName);
+        this.currentSong = await navidromeModel.fetchCurrentTrack();
+    }
 }
 
 const spotifyPresenter = new SpotifyPresenter();

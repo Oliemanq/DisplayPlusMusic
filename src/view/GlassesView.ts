@@ -16,6 +16,7 @@ import {
 import { formatTime } from '../Scripts/formatTime';
 import Song from '../model/songModel';
 import lyricsPresenter from '../presenter/lyricsPresenter';
+import spotifyPresenter from '../presenter/spotifyPresenter';
 
 const MAX_HEIGHT = 288;
 const MAX_WIDTH = 576;
@@ -26,6 +27,7 @@ let isPageCreated = false;
 let isUpdating = false;
 let isSendingImage = false;
 let lastSongID = "";
+let lastRenderedSource = '';
 let imageRetryAt = 0;
 
 /** Resolves with fallback value if the promise times out or throws. */
@@ -36,10 +38,10 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
     ]);
 }
 
-/** Builds the static container layout. Content fields are irrelevant for layout comparison. */
-function buildContainerConfig(songInfoText: string, playbackBarText: string) {
+/** Builds the container layout for the active source. Content fields are irrelevant for layout comparison. */
+function buildContainerConfig(songInfoText: string, playbackBarText: string, showPlaybackButtons: boolean) {
     return {
-        containerTotalNum: 4,
+        containerTotalNum: showPlaybackButtons ? 4 : 3,
         imageObject: [
             new ImageContainerProperty({
                 xPosition: 22,
@@ -50,7 +52,7 @@ function buildContainerConfig(songInfoText: string, playbackBarText: string) {
                 containerName: 'album-art',
             }),
         ],
-        listObject: [
+        listObject: showPlaybackButtons ? [
             new ListContainerProperty({
                 xPosition: 154,
                 yPosition: 0,
@@ -67,12 +69,12 @@ function buildContainerConfig(songInfoText: string, playbackBarText: string) {
                     isItemSelectBorderEn: 1,
                 }),
             }),
-        ],
+        ] : [],
         textObject: [
             new TextContainerProperty({
-                xPosition: 234,
+                xPosition: showPlaybackButtons ? 234 : 154,
                 yPosition: 8,
-                width: MAX_WIDTH - 242,
+                width: showPlaybackButtons ? MAX_WIDTH - 242 : MAX_WIDTH - 162,
                 height: 132,
                 borderRadius: 12,
                 borderWidth: 1,
@@ -152,7 +154,26 @@ export async function createView(song: Song): Promise<void> {
             `  ${lyricsPresenter.currentLine}\n` +
             `    ${lyricsPresenter.nextLine}`;
 
-        const config = buildContainerConfig(songInfoText, playbackBarText);
+        const activeSource = spotifyPresenter.getActiveSource();
+        const showPlaybackButtons = activeSource !== 'navidrome';
+        const config = buildContainerConfig(songInfoText, playbackBarText, showPlaybackButtons);
+
+        if (lastRenderedSource !== activeSource) {
+            lastRenderedSource = activeSource;
+            if (isPageCreated) {
+                const rebuilt = await withTimeout(
+                    bridge.rebuildPageContainer(new RebuildPageContainer(config)),
+                    5000,
+                    false,
+                );
+                if (rebuilt) {
+                    await new Promise(r => setTimeout(r, 300));
+                    lastSongID = '';
+                    imageRetryAt = 0;
+                }
+                return;
+            }
+        }
 
         // First-time setup: create the page container
         if (!isPageCreated) {

@@ -19,6 +19,14 @@ type NavidromeNowPlayingEntry = {
     playerName?: string;
 };
 
+export type NavidromePlaybackClient = {
+    clientName: string;
+    title: string;
+    artist: string;
+    songID: string;
+    isPlaying: boolean;
+};
+
 type SubsonicResponse = {
     'subsonic-response'?: {
         status?: string;
@@ -33,9 +41,19 @@ function normalizeBaseUrl(baseUrl: string): string {
     return baseUrl.trim().replace(/\/+$/, '');
 }
 
-function pickFirstEntry(entry?: NavidromeNowPlayingEntry | NavidromeNowPlayingEntry[]) {
-    if (!entry) return undefined;
-    return Array.isArray(entry) ? entry[0] : entry;
+function normalizeClientName(entry: NavidromeNowPlayingEntry): string {
+    return entry.playerName?.trim() || entry.username?.trim() || 'Unknown client';
+}
+
+function toClientSummary(entry: NavidromeNowPlayingEntry): NavidromePlaybackClient {
+    const playbackState = entry.state ?? 'playing';
+    return {
+        clientName: normalizeClientName(entry),
+        title: entry.title ?? 'Unknown Title',
+        artist: entry.artist ?? 'Unknown Artist',
+        songID: entry.id ?? entry.coverArt ?? '0',
+        isPlaying: playbackState !== 'paused' && playbackState !== 'stopped',
+    };
 }
 
 class NavidromeModel {
@@ -47,11 +65,14 @@ class NavidromeModel {
     private lastSnapshotSongID = '0';
     private lastSnapshotProgressSeconds = 0;
     private lastSnapshotIsPlaying = false;
+    private selectedClientName = '';
+    private playbackClients: NavidromePlaybackClient[] = [];
 
     async init(): Promise<boolean> {
         this.baseUrl = normalizeBaseUrl((await storage.getItem('navidrome_base_url')) ?? '');
         this.username = (await storage.getItem('navidrome_username')) ?? '';
         this.password = (await storage.getItem('navidrome_password')) ?? '';
+        this.selectedClientName = (await storage.getItem('navidrome_selected_client')) ?? '';
 
         const isConfigured = Boolean(this.baseUrl && this.username && this.password);
         const popup = document.getElementById('spotify-auth-popup');
@@ -72,9 +93,9 @@ class NavidromeModel {
         });
     }
 
-    private async getNowPlayingData(): Promise<NavidromeNowPlayingEntry | undefined> {
+    private async getNowPlayingData(): Promise<NavidromeNowPlayingEntry[]> {
         if (!this.baseUrl || !this.username || !this.password) {
-            return undefined;
+            return [];
         }
 
         const params = await this.authQueryParams();
@@ -89,13 +110,33 @@ class NavidromeModel {
             throw new Error(subsonic?.error?.message || 'Failed to fetch Navidrome now playing data');
         }
 
-        return pickFirstEntry(subsonic.nowPlaying?.entry);
+        const entries = subsonic.nowPlaying?.entry;
+        if (!entries) {
+            return [];
+        }
+
+        return Array.isArray(entries) ? entries : [entries];
+    }
+
+    getPlaybackClients(): NavidromePlaybackClient[] {
+        return this.playbackClients;
+    }
+
+    getSelectedPlaybackClient(): string {
+        return this.selectedClientName;
+    }
+
+    async setSelectedPlaybackClient(clientName: string): Promise<void> {
+        this.selectedClientName = clientName;
+        await storage.setItem('navidrome_selected_client', clientName);
     }
 
     async fetchCurrentTrack(): Promise<Song> {
         try {
-            const entry = await this.getNowPlayingData();
-            if (!entry) {
+            const entries = await this.getNowPlayingData();
+            this.playbackClients = entries.map(toClientSummary);
+
+            if (entries.length === 0) {
                 if (this.currentSong.songID !== '0') {
                     this.currentSong.addisPlaying(false);
                     return this.currentSong;
@@ -103,17 +144,27 @@ class NavidromeModel {
                 return song_placeholder;
             }
 
+            const selectedEntry = entries.find(entry => normalizeClientName(entry) === this.selectedClientName)
+                ?? entries[0];
+
+            const selectedClientName = normalizeClientName(selectedEntry);
+            if (selectedClientName !== this.selectedClientName) {
+                this.selectedClientName = selectedClientName;
+                await storage.setItem('navidrome_selected_client', selectedClientName);
+            }
+
             const song = new Song();
-            song.addID(entry.id ?? entry.coverArt ?? '0');
-            song.addTitle(entry.title ?? 'Unknown Title');
-            song.addArtist(entry.artist ?? 'Unknown Artist');
+            song.addID(selectedEntry.id ?? selectedEntry.coverArt ?? '0');
+            song.addTitle(selectedEntry.title ?? 'Unknown Title');
+            song.addArtist(selectedEntry.artist ?? 'Unknown Artist');
             song.addFeatures([]);
-            song.addAlbum(entry.album ?? 'Unknown Album');
-            song.addDurationSeconds(entry.duration ?? 0);
+            song.addAlbum(selectedEntry.album ?? 'Unknown Album');
+            song.addDurationSeconds(selectedEntry.duration ?? 0);
             const now = performance.now();
-            const isPlaying = (entry.state ?? 'playing') !== 'paused' && (entry.state ?? 'stopped') !== 'stopped';
+            const playbackState = selectedEntry.state ?? 'playing';
+            const isPlaying = playbackState !== 'paused' && playbackState !== 'stopped';
             const sameTrack = song.songID === this.lastSnapshotSongID && this.lastSnapshotSongID !== '0';
-            let progressSeconds = (entry.positionMs ?? 0) / 1000;
+            let progressSeconds = (selectedEntry.positionMs ?? 0) / 1000;
 
             if (sameTrack && this.lastSnapshotAt > 0) {
                 const elapsedSeconds = Math.max(0, (now - this.lastSnapshotAt) / 1000);
@@ -146,8 +197,8 @@ class NavidromeModel {
             this.lastSnapshotProgressSeconds = progressSeconds;
             this.lastSnapshotIsPlaying = isPlaying;
 
-            if (entry.coverArt || entry.albumId || entry.id) {
-                this.fetchArtAsync(entry.coverArt ?? entry.albumId ?? entry.id ?? '', this.currentSong).catch(console.error);
+            if (selectedEntry.coverArt || selectedEntry.albumId || selectedEntry.id) {
+                this.fetchArtAsync(selectedEntry.coverArt ?? selectedEntry.albumId ?? selectedEntry.id ?? '', this.currentSong).catch(console.error);
             }
 
             return this.currentSong;

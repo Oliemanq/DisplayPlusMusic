@@ -9,6 +9,38 @@
 </head>
 
 <body>
+    <div id="error-overlay"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #8b0000; color: white; padding: 24px; z-index: 99999; overflow: auto; font-family: monospace; font-size: 24px; line-height: 1.4; box-sizing: border-box;">
+        <h2 style="margin-top: 0; font-size: 32px; border-bottom: 2px solid white; padding-bottom: 10px;">App Crash
+            Overlay</h2>
+        <pre id="error-overlay-text"
+            style="white-space: pre-wrap; word-break: break-all; font-family: monospace;"></pre>
+    </div>
+    <script>
+        function showGlobalError(message, stack) {
+            var overlay = document.getElementById('error-overlay');
+            var text = document.getElementById('error-overlay-text');
+            if (overlay && text) {
+                overlay.style.display = 'block';
+                text.textContent = (stack || message);
+            }
+        }
+        window.onerror = function (message, source, lineno, colno, error) {
+            showGlobalError(message, error ? error.stack : (source + ':' + lineno + ':' + colno));
+            return false;
+        };
+        window.onunhandledrejection = function (event) {
+            var reason = event.reason;
+            var msg = reason;
+            var stack = null;
+            if (reason && typeof reason === 'object') {
+                msg = reason.message || JSON.stringify(reason);
+                stack = reason.stack;
+            }
+            showGlobalError('Unhandled Rejection: ' + msg, stack);
+        };
+    </script>
+
     <!-- handles starting logic and starts button listeners-->
     <script type="module" src="/src/Main.ts"></script>
 
@@ -26,12 +58,21 @@
             <p id="song-total-time" class="song-info"></p>
         </span>
     </span>
+    <section id="navidrome-client-picker" class="container navidrome-client-picker" style="display: none;">
+        <div class="navidrome-client-header">
+            <p class="navidrome-client-title">Navidrome client</p>
+        </div>
+        <div id="navidrome-client-list" class="navidrome-client-list"></div>
+    </section>
     <span id="mini-buttons-container" class="container">
         <button class="button" id="previous-track">Previous track</button>
         <button class="button" id="play-pause">Play/Pause</button>
         <button class="button" id="skip-track">Skip track</button>
     </span>
     <span class="container" id="lyrics-container">
+        <p id='lyrics-source'
+            style="width: 100%; text-align: right; font-size: 20px; font-weight: 100; font-style: italic; margin: 10px 20px 0 0; ">
+        </p>
         <p id='current-lyric-line'></p>
         <p id='next-lyric-line'></p>
     </span>
@@ -42,8 +83,15 @@
     <!-- Popup for spotify Auth -->
     <div id="spotify-auth-popup" class="popup">
         <p class="popup-title">
-            Spotify Setup Required
+            Music Source Setup Required
         </p>
+        <label class="popup-dropdown">
+            <span class="popup-dropdown-label">Source</span>
+            <select id="music-source" class="popup-select" aria-invalid="false">
+                <option value="spotify">Spotify</option>
+                <option value="navidrome">Navidrome</option>
+            </select>
+        </label>
         <details class="popup-label">
             <summary class="dropdown-label">
                 <h5 style="text-align: left; margin: 0; margin-left: 35px;">Instructions</h5>
@@ -52,25 +100,41 @@
                     instructions</p>
             </summary>
             <div class="dropdown-container">
-                <h4>Spotify Premium is required for this app due to spotify restrictions</h4>
-                <p> To get started, head to </p>
-                <p class="popup-link">https://developer.spotify.com/dashboard/</p>
-                <p>in a browser and sign in. From there, create an app and add a name and description of your choice.
-                    <br>Then add <br>
-                </p>
-                <p class="popup-link">https://oliemanq.github.io/DisplayPlusMusic/</p>
-                <p>as a Redirect URI and select 'Web API' at the bottom. <br>
-                    Finally, copy your client ID and client secret from there and paste them below.</p>
+                <div id="spotify-auth-copy" style="display: flex; flex-direction: column; gap: 12px;">
+                    <h4>Spotify Premium is required for this app due to spotify restrictions</h4>
+                    <p> To get started, head to </p>
+                    <p class="popup-link">https://developer.spotify.com/dashboard/</p>
+                    <p>in a browser and sign in. From there, create an app and add a name and description of your
+                        choice.
+                        <br>Then add <br>
+                    </p>
+                    <p class="popup-link">https://oliemanq.github.io/DisplayPlusMusic/</p>
+                    <p>as a Redirect URI and select 'Web API' at the bottom. <br>
+                        Finally, copy your client ID and client secret from there and paste them below.</p>
+                </div>
+                <div id="navidrome-auth-copy" style="display: none; flex-direction: column; gap: 12px;">
+                    <h4>Navidrome / Subsonic setup</h4>
+                    <p>Enter the base URL of your Navidrome server and the account used by the phone app that reports
+                        playback.</p>
+                    <p>Example: https://music.example.com</p>
+                </div>
             </div>
         </details>
 
+        <div id="spotify-auth-fields" style="width: 100%; display: flex; flex-direction: column; gap: 12px;">
+            <input class="popup-input" id="client-id" placeholder="Client ID">
+            <input class="popup-input" type="password" id="client-secret" placeholder="Client Secret">
+        </div>
 
-        <input class="popup-input" id="client-id" placeholder="Client ID">
-        <input class="popup-input" type="password" id="client-secret" placeholder="Client Secret">
+        <div id="navidrome-auth-fields" style="width: 100%; display: none; flex-direction: column; gap: 12px;">
+            <input class="popup-input" id="navidrome-base-url" placeholder="Navidrome Base URL">
+            <input class="popup-input" id="navidrome-username" placeholder="Username">
+            <input class="popup-input" type="password" id="navidrome-password" placeholder="Password">
+        </div>
 
         <span id="spacer"></span>
 
-        <button class="small-button accent" id="save-auth">Save & Authorize</button>
+        <button class="small-button accent" id="save-auth">Save Settings</button>
     </div>
 
     <style>
@@ -144,6 +208,60 @@
         .popup-title {
             font-weight: bold;
             font-size: 48px;
+        }
+
+        .popup-dropdown {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            margin: 6px 6px 12px;
+        }
+
+        .popup-dropdown-label {
+            font-size: 22px;
+            color: rgba(35, 35, 35, 0.88);
+            padding-left: 6px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        /* Pill-shaped select matching design guide */
+        .popup-select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 96px;
+            padding: 0 72px 0 28px;
+            box-sizing: border-box;
+            border-radius: 18px;
+            background: var(--surface-strong);
+            border: 1px solid var(--field-border);
+            color: var(--text-dark);
+            font-size: 32px;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+            position: relative;
+            transition: box-shadow 0.12s ease, border-color 0.12s ease, transform 0.06s ease;
+            background-image: linear-gradient(45deg, transparent 50%, rgba(0, 0, 0, 0.66) 50%), linear-gradient(135deg, rgba(0, 0, 0, 0.66) 50%, transparent 50%);
+            background-position: calc(100% - 28px) calc(50% - 8px), calc(100% - 20px) calc(50% - 8px);
+            background-size: 10px 10px, 10px 10px;
+            background-repeat: no-repeat;
+        }
+
+        .popup-select:focus {
+            border-color: var(--field-border-strong);
+            box-shadow: 0 6px 28px rgba(0, 0, 0, 0.10);
+            transform: translateY(-1px);
+        }
+
+        .popup-select[aria-invalid="true"] {
+            border-color: var(--button-foreground-danger);
+            box-shadow: 0 0 0 4px rgba(255, 84, 84, 0.08);
+            background: rgba(255, 84, 84, 0.03);
+            color: var(--button-foreground-danger);
         }
 
         .popup-link {
@@ -283,6 +401,88 @@
             gap: 12px;
         }
 
+        .navidrome-client-picker {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 16px;
+            padding: 18px;
+            margin-left: 12px;
+            margin-right: 12px;
+            border-radius: 10px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(245, 245, 245, 0.92));
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .navidrome-client-header {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .navidrome-client-title {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .navidrome-client-subtitle {
+            margin: 0;
+            font-size: 20px;
+            color: rgba(35, 35, 35, 0.72);
+        }
+
+        .navidrome-client-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .navidrome-client-card {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+            width: 100%;
+            padding: 18px 20px;
+            border-radius: 6px;
+            border: transparent;
+            background: #EEEEEE;
+            color: var(--text-dark);
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .navidrome-client-card:hover {
+            transform: translateY(-1px);
+        }
+
+        .navidrome-client-card.selected {
+            background-color: #FEF991;
+        }
+
+        .navidrome-client-name {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .navidrome-client-track {
+            font-size: 20px;
+            opacity: 0.92;
+        }
+
+        .navidrome-client-artist {
+            font-size: 18px;
+            opacity: 0.7;
+        }
+
+        .navidrome-client-empty {
+            margin: 0;
+            padding: 12px 4px;
+            font-size: 20px;
+            color: rgba(35, 35, 35, 0.72);
+        }
+
         #album-art-container,
         #lyrics-container {
             margin: 12px;
@@ -298,6 +498,8 @@
 
         #lyrics-container {
             flex-direction: column;
+            justify-content: flex-start;
+            gap: 4px;
         }
 
         .subcontainer {

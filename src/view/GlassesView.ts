@@ -16,6 +16,7 @@ import {
 import { formatTime } from '../Scripts/formatTime';
 import Song from '../model/songModel';
 import lyricsPresenter from '../presenter/lyricsPresenter';
+import spotifyPresenter from '../presenter/spotifyPresenter';
 
 const MAX_HEIGHT = 288;
 const MAX_WIDTH = 576;
@@ -26,6 +27,7 @@ let isPageCreated = false;
 let isUpdating = false;
 let isSendingImage = false;
 let lastSongID = "";
+let lastRenderedSource = '';
 let imageRetryAt = 0;
 
 /** Resolves with fallback value if the promise times out or throws. */
@@ -36,30 +38,32 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
     ]);
 }
 
-/** Builds the static container layout. Content fields are irrelevant for layout comparison. */
-function buildContainerConfig(songInfoText: string, playbackBarText: string) {
+/** Builds the container layout for the active source. Content fields are irrelevant for layout comparison. */
+function buildContainerConfig(songInfoText: string, playbackBarText: string, showPlaybackButtons: boolean) {
     return {
-        containerTotalNum: 4,
+        containerTotalNum: showPlaybackButtons ? 4 : 3,
         imageObject: [
             new ImageContainerProperty({
-                xPosition: 22,
-                yPosition: 22,
-                width: 100,
-                height: 100,
+                xPosition: 2,
+                yPosition: 2,
+                width: 144,
+                height: 144,
                 containerID: 0,
+                // zOrderIndex: 1,
                 containerName: 'album-art',
             }),
         ],
-        listObject: [
+        listObject: showPlaybackButtons ? [
             new ListContainerProperty({
-                xPosition: 154,
-                yPosition: 0,
+                xPosition: 155,
+                yPosition: 8,
                 width: 80,
                 height: 132,
                 borderWidth: 0,
                 borderRadius: 0,
                 containerID: 2,
                 containerName: 'buttons',
+                // zOrderIndex: 1,
                 isEventCapture: 1,
                 itemContainer: new ListItemContainerProperty({
                     itemCount: 3,
@@ -67,12 +71,12 @@ function buildContainerConfig(songInfoText: string, playbackBarText: string) {
                     isItemSelectBorderEn: 1,
                 }),
             }),
-        ],
+        ] : [],
         textObject: [
             new TextContainerProperty({
-                xPosition: 234,
-                yPosition: 8,
-                width: MAX_WIDTH - 242,
+                xPosition: showPlaybackButtons ? 234 : 155,
+                yPosition: 12,
+                width: showPlaybackButtons ? MAX_WIDTH - 232 : MAX_WIDTH - 153,
                 height: 132,
                 borderRadius: 12,
                 borderWidth: 1,
@@ -80,18 +84,20 @@ function buildContainerConfig(songInfoText: string, playbackBarText: string) {
                 containerID: 3,
                 containerName: 'songInfo',
                 content: songInfoText,
+                // zOrderIndex: 1,
                 isEventCapture: 0,
             }),
             new TextContainerProperty({
                 xPosition: 0,
-                yPosition: 150,
+                yPosition: 155,
                 width: MAX_WIDTH,
-                height: MAX_HEIGHT - 150,
+                height: MAX_HEIGHT - 155,
                 borderRadius: 6,
                 borderWidth: 0,
                 containerID: 4,
                 containerName: 'playbackBar',
                 content: playbackBarText,
+                // zOrderIndex: 1,
                 isEventCapture: 0,
             }),
         ],
@@ -147,12 +153,31 @@ export async function createView(song: Song): Promise<void> {
 
         const songInfoText = `${song.title}\n${song.artist}\n${song.album}`;
         const playbackBarText =
-            `    ${formatTime(song.progressSeconds)} / ${formatTime(song.durationSeconds)}\n` +
+            `${formatTime(song.progressSeconds)}/${formatTime(song.durationSeconds)}\n` +
             `${song.createPlaybackBar(MAX_WIDTH)}\n` +
             `  ${lyricsPresenter.currentLine}\n` +
             `    ${lyricsPresenter.nextLine}`;
 
-        const config = buildContainerConfig(songInfoText, playbackBarText);
+        const activeSource = spotifyPresenter.getActiveSource();
+        const showPlaybackButtons = activeSource !== 'navidrome';
+        const config = buildContainerConfig(songInfoText, playbackBarText, showPlaybackButtons);
+
+        if (lastRenderedSource !== activeSource) {
+            lastRenderedSource = activeSource;
+            if (isPageCreated) {
+                const rebuilt = await withTimeout(
+                    bridge.rebuildPageContainer(new RebuildPageContainer(config)),
+                    5000,
+                    false,
+                );
+                if (rebuilt) {
+                    await new Promise(r => setTimeout(r, 300));
+                    lastSongID = '';
+                    imageRetryAt = 0;
+                }
+                return;
+            }
+        }
 
         // First-time setup: create the page container
         if (!isPageCreated) {

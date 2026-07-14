@@ -125,7 +125,7 @@ song_placeholder.addAlbum(" ");
 song_placeholder.addID("0");
 song_placeholder.addProgressSeconds(30);
 song_placeholder.addDurationSeconds(60);
-// song_placeholder.addArtRaw(await downloadImageAsGrayscalePng(placeholderArtUrl, 100, 100));
+// song_placeholder.addArtRaw(await downloadImageAsGrayscalePng(placeholderArtUrl, 144, 144));
 // song_placeholder.addArtColor(await downloadImage(placeholderArtUrl, 144, 144));
 song_placeholder.addisPlaying(false);
 song_placeholder.addChangedState(false);

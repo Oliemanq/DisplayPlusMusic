@@ -157,6 +157,21 @@ class ImageModel {
       // Ignore if context doesn't expose these properties
     }
 
+    // Apply rounded corners via clipping path
+    const radius = 16;
+    ctx.beginPath();
+    ctx.moveTo(radius, 0);
+    ctx.lineTo(width - radius, 0);
+    ctx.quadraticCurveTo(width, 0, width, radius);
+    ctx.lineTo(width, height - radius);
+    ctx.quadraticCurveTo(width, height, width - radius, height);
+    ctx.lineTo(radius, height);
+    ctx.quadraticCurveTo(0, height, 0, height - radius);
+    ctx.lineTo(0, radius);
+    ctx.quadraticCurveTo(0, 0, radius, 0);
+    ctx.closePath();
+    ctx.clip();
+
     // Draw image to fit the target dimensions (with smoothing)
     ctx.drawImage(bitmap, 0, 0, width, height);
     const imageData = ctx.getImageData(0, 0, width, height);

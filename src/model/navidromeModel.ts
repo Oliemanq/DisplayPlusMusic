@@ -164,11 +164,19 @@ class NavidromeModel {
             const playbackState = selectedEntry.state ?? 'playing';
             const isPlaying = playbackState !== 'paused' && playbackState !== 'stopped';
             const sameTrack = song.songID === this.lastSnapshotSongID && this.lastSnapshotSongID !== '0';
-            let progressSeconds = (selectedEntry.positionMs ?? 0) / 1000;
+            const serverProgress = (selectedEntry.positionMs ?? 0) / 1000;
+            let progressSeconds = serverProgress;
 
             if (sameTrack && this.lastSnapshotAt > 0) {
                 const elapsedSeconds = Math.max(0, (now - this.lastSnapshotAt) / 1000);
-                progressSeconds = this.lastSnapshotProgressSeconds + (this.lastSnapshotIsPlaying ? elapsedSeconds : 0);
+                const localProgress = this.lastSnapshotProgressSeconds + (this.lastSnapshotIsPlaying ? elapsedSeconds : 0);
+                const drift = Math.abs(serverProgress - localProgress);
+                if (drift > 1.5) {
+                    console.log(`[Navidrome] Drift corrected: ${drift.toFixed(2)}s (local: ${localProgress.toFixed(2)}s, server: ${serverProgress.toFixed(2)}s)`);
+                    progressSeconds = serverProgress;
+                } else {
+                    progressSeconds = localProgress;
+                }
             }
 
             if (song.durationSeconds > 0) {
@@ -243,7 +251,7 @@ class NavidromeModel {
             }).toString()}`;
 
             const [raw, color] = await Promise.all([
-                downloadImageAsGrayscalePng(url, 100, 100),
+                downloadImageAsGrayscalePng(url, 144, 144),
                 downloadImage(url, 120, 120),
             ]);
 

@@ -199,7 +199,7 @@ class SpotifyModel {
         try {
             const url = track.album.images[0].url;
             const [raw, color] = await Promise.all([
-                downloadImageAsGrayscalePng(url, 100, 100),
+                downloadImageAsGrayscalePng(url, 144, 144),
                 downloadImage(url, 120, 120),
             ]);
             // Only patch if this song is still current

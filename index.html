@@ -9,6 +9,38 @@
 </head>
 
 <body>
+    <div id="error-overlay"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #8b0000; color: white; padding: 24px; z-index: 99999; overflow: auto; font-family: monospace; font-size: 24px; line-height: 1.4; box-sizing: border-box;">
+        <h2 style="margin-top: 0; font-size: 32px; border-bottom: 2px solid white; padding-bottom: 10px;">App Crash
+            Overlay</h2>
+        <pre id="error-overlay-text"
+            style="white-space: pre-wrap; word-break: break-all; font-family: monospace;"></pre>
+    </div>
+    <script>
+        function showGlobalError(message, stack) {
+            var overlay = document.getElementById('error-overlay');
+            var text = document.getElementById('error-overlay-text');
+            if (overlay && text) {
+                overlay.style.display = 'block';
+                text.textContent = (stack || message);
+            }
+        }
+        window.onerror = function (message, source, lineno, colno, error) {
+            showGlobalError(message, error ? error.stack : (source + ':' + lineno + ':' + colno));
+            return false;
+        };
+        window.onunhandledrejection = function (event) {
+            var reason = event.reason;
+            var msg = reason;
+            var stack = null;
+            if (reason && typeof reason === 'object') {
+                msg = reason.message || JSON.stringify(reason);
+                stack = reason.stack;
+            }
+            showGlobalError('Unhandled Rejection: ' + msg, stack);
+        };
+    </script>
+
     <!-- handles starting logic and starts button listeners-->
     <script type="module" src="/src/Main.ts"></script>
 
@@ -38,7 +70,9 @@
         <button class="button" id="skip-track">Skip track</button>
     </span>
     <span class="container" id="lyrics-container">
-        <p id='lyrics-source' style="width: 100%; text-align: right; font-size: 20px; font-weight: 100; font-style: italic; margin: 10px 20px 0 0; "></p>
+        <p id='lyrics-source'
+            style="width: 100%; text-align: right; font-size: 20px; font-weight: 100; font-style: italic; margin: 10px 20px 0 0; ">
+        </p>
         <p id='current-lyric-line'></p>
         <p id='next-lyric-line'></p>
     </span>
@@ -70,7 +104,8 @@
                     <h4>Spotify Premium is required for this app due to spotify restrictions</h4>
                     <p> To get started, head to </p>
                     <p class="popup-link">https://developer.spotify.com/dashboard/</p>
-                    <p>in a browser and sign in. From there, create an app and add a name and description of your choice.
+                    <p>in a browser and sign in. From there, create an app and add a name and description of your
+                        choice.
                         <br>Then add <br>
                     </p>
                     <p class="popup-link">https://oliemanq.github.io/DisplayPlusMusic/</p>
@@ -79,7 +114,8 @@
                 </div>
                 <div id="navidrome-auth-copy" style="display: none; flex-direction: column; gap: 12px;">
                     <h4>Navidrome / Subsonic setup</h4>
-                    <p>Enter the base URL of your Navidrome server and the account used by the phone app that reports playback.</p>
+                    <p>Enter the base URL of your Navidrome server and the account used by the phone app that reports
+                        playback.</p>
                     <p>Example: https://music.example.com</p>
                 </div>
             </div>
@@ -184,7 +220,7 @@
 
         .popup-dropdown-label {
             font-size: 22px;
-            color: rgba(35,35,35,0.88);
+            color: rgba(35, 35, 35, 0.88);
             padding-left: 6px;
             font-weight: 600;
             letter-spacing: -0.01em;
@@ -209,7 +245,7 @@
             cursor: pointer;
             position: relative;
             transition: box-shadow 0.12s ease, border-color 0.12s ease, transform 0.06s ease;
-            background-image: linear-gradient(45deg, transparent 50%, rgba(0,0,0,0.66) 50%), linear-gradient(135deg, rgba(0,0,0,0.66) 50%, transparent 50%);
+            background-image: linear-gradient(45deg, transparent 50%, rgba(0, 0, 0, 0.66) 50%), linear-gradient(135deg, rgba(0, 0, 0, 0.66) 50%, transparent 50%);
             background-position: calc(100% - 28px) calc(50% - 8px), calc(100% - 20px) calc(50% - 8px);
             background-size: 10px 10px, 10px 10px;
             background-repeat: no-repeat;
@@ -217,14 +253,14 @@
 
         .popup-select:focus {
             border-color: var(--field-border-strong);
-            box-shadow: 0 6px 28px rgba(0,0,0,0.10);
+            box-shadow: 0 6px 28px rgba(0, 0, 0, 0.10);
             transform: translateY(-1px);
         }
 
         .popup-select[aria-invalid="true"] {
             border-color: var(--button-foreground-danger);
-            box-shadow: 0 0 0 4px rgba(255,84,84,0.08);
-            background: rgba(255,84,84,0.03);
+            box-shadow: 0 0 0 4px rgba(255, 84, 84, 0.08);
+            background: rgba(255, 84, 84, 0.03);
             color: var(--button-foreground-danger);
         }
 
@@ -373,7 +409,7 @@
             margin-left: 12px;
             margin-right: 12px;
             border-radius: 10px;
-            background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(245,245,245,0.92));
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(245, 245, 245, 0.92));
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
         }
 

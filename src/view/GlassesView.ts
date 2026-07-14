@@ -44,24 +44,26 @@ function buildContainerConfig(songInfoText: string, playbackBarText: string, sho
         containerTotalNum: showPlaybackButtons ? 4 : 3,
         imageObject: [
             new ImageContainerProperty({
-                xPosition: 22,
-                yPosition: 22,
-                width: 100,
-                height: 100,
+                xPosition: 2,
+                yPosition: 2,
+                width: 144,
+                height: 144,
                 containerID: 0,
+                // zOrderIndex: 1,
                 containerName: 'album-art',
             }),
         ],
         listObject: showPlaybackButtons ? [
             new ListContainerProperty({
-                xPosition: 154,
-                yPosition: 0,
+                xPosition: 155,
+                yPosition: 8,
                 width: 80,
                 height: 132,
                 borderWidth: 0,
                 borderRadius: 0,
                 containerID: 2,
                 containerName: 'buttons',
+                // zOrderIndex: 1,
                 isEventCapture: 1,
                 itemContainer: new ListItemContainerProperty({
                     itemCount: 3,
@@ -72,9 +74,9 @@ function buildContainerConfig(songInfoText: string, playbackBarText: string, sho
         ] : [],
         textObject: [
             new TextContainerProperty({
-                xPosition: showPlaybackButtons ? 234 : 154,
-                yPosition: 8,
-                width: showPlaybackButtons ? MAX_WIDTH - 242 : MAX_WIDTH - 162,
+                xPosition: showPlaybackButtons ? 234 : 155,
+                yPosition: 12,
+                width: showPlaybackButtons ? MAX_WIDTH - 232 : MAX_WIDTH - 153,
                 height: 132,
                 borderRadius: 12,
                 borderWidth: 1,
@@ -82,18 +84,20 @@ function buildContainerConfig(songInfoText: string, playbackBarText: string, sho
                 containerID: 3,
                 containerName: 'songInfo',
                 content: songInfoText,
+                // zOrderIndex: 1,
                 isEventCapture: 0,
             }),
             new TextContainerProperty({
                 xPosition: 0,
-                yPosition: 150,
+                yPosition: 155,
                 width: MAX_WIDTH,
-                height: MAX_HEIGHT - 150,
+                height: MAX_HEIGHT - 155,
                 borderRadius: 6,
                 borderWidth: 0,
                 containerID: 4,
                 containerName: 'playbackBar',
                 content: playbackBarText,
+                // zOrderIndex: 1,
                 isEventCapture: 0,
             }),
         ],
@@ -149,7 +153,7 @@ export async function createView(song: Song): Promise<void> {
 
         const songInfoText = `${song.title}\n${song.artist}\n${song.album}`;
         const playbackBarText =
-            `    ${formatTime(song.progressSeconds)} / ${formatTime(song.durationSeconds)}\n` +
+            `${formatTime(song.progressSeconds)}/${formatTime(song.durationSeconds)}\n` +
             `${song.createPlaybackBar(MAX_WIDTH)}\n` +
             `  ${lyricsPresenter.currentLine}\n` +
             `    ${lyricsPresenter.nextLine}`;

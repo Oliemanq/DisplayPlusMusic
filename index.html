@@ -76,8 +76,13 @@
         <p id='current-lyric-line'></p>
         <p id='next-lyric-line'></p>
     </span>
-    <span id="small-button-container" class="container">
+    <span id="small-button-container-1" class="container">
         <button class="small-button danger" id="clear-local-refresh-token">Logout</button>
+    </span>
+    <span id="small-button-container-2"
+        style="position: fixed; bottom: 0; left: 0; right: 0; padding-bottom: 100px; z-index: 165;" class="container">
+        <a href="https://ko-fi.com/oliemanq" target="_blank" class="small-button accent" id="kofi-link"
+            style="text-decoration: none; box-sizing: border-box;">Support me on Ko-fi</a>
     </span>
 
     <!-- Popup for spotify Auth -->
@@ -95,7 +100,8 @@
         <details class="popup-label">
             <summary class="dropdown-label">
                 <h5 style="text-align: left; margin: 0; margin-left: 35px;">Instructions</h5>
-                <p style="font-size: 24px; margin: 0; margin-top: 4px; text-align: left; margin-left: 40px;">Tap to view
+                <p style="font-size: 24px; margin: 0; margin-top: 4px; text-align: left; margin-left: 40px;">Tap
+                    to view
                     setup
                     instructions</p>
             </summary>
@@ -104,7 +110,8 @@
                     <h4>Spotify Premium is required for this app due to spotify restrictions</h4>
                     <p> To get started, head to </p>
                     <p class="popup-link">https://developer.spotify.com/dashboard/</p>
-                    <p>in a browser and sign in. From there, create an app and add a name and description of your
+                    <p>in a browser and sign in. From there, create an app and add a name and description of
+                        your
                         choice.
                         <br>Then add <br>
                     </p>
@@ -114,7 +121,8 @@
                 </div>
                 <div id="navidrome-auth-copy" style="display: none; flex-direction: column; gap: 12px;">
                     <h4>Navidrome / Subsonic setup</h4>
-                    <p>Enter the base URL of your Navidrome server and the account used by the phone app that reports
+                    <p>Enter the base URL of your Navidrome server and the account used by the phone app that
+                        reports
                         playback.</p>
                     <p>Example: https://music.example.com</p>
                 </div>
@@ -174,6 +182,7 @@
             background: var(--background);
             font-family: "Inter", "sans-serif";
             color: var(--text);
+            padding-bottom: 160px;
         }
 
         .popup {
@@ -584,6 +593,24 @@
         #save-auth {
             background-color: var(--accent);
             color: var(--text)
+        }
+
+        #small-button-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--background);
+            margin: 0;
+            padding: 20px 12px 24px 12px;
+            box-sizing: border-box;
+            z-index: 100;
+            display: flex;
+            gap: 12px;
+        }
+
+        #small-button-container>.small-button {
+            flex: 1;
         }
     </style>
 </body>

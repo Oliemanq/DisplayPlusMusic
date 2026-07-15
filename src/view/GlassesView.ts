@@ -85,7 +85,7 @@ function buildContainerConfig(songInfoText: string, playbackBarText: string, sho
                 containerName: 'songInfo',
                 content: songInfoText,
                 // zOrderIndex: 1,
-                isEventCapture: 0,
+                isEventCapture: showPlaybackButtons ? 0 : 1,
             }),
             new TextContainerProperty({
                 xPosition: 0,

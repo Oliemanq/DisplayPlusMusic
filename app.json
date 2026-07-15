@@ -3,7 +3,7 @@
   "edition": "202601",
   "name": "DisplayPlus Music",
   "author": "oliemanq",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "min_app_version": "2.1.0",
   "min_sdk_version": "0.0.9",
   "entrypoint": "index.html",

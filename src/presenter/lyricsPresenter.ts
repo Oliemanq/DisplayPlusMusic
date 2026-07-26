@@ -107,15 +107,16 @@ class LyricsPresenter {
             const progress = spotifyPresenter.currentSong.progressSeconds + this.BLUETOOTH_DELAY;
             this.currentIndex = this.getActiveIndex(parsedLines, progress);
 
+            const fmt = (line: LyricLine) =>
+              line.text === '~ ♪♪♪ ~' ? `     ${line.text}` : `[${formatTime(line.time)}] ${line.text}`;
+
             if (this.currentIndex === -1) {
                 this.currentLine = '';
-                this.nextLine = parsedLines.length > 0
-                    ? `[${formatTime(parsedLines[0].time)}] ${parsedLines[0].text}`
-                    : '';
+                this.nextLine = parsedLines.length > 0 ? fmt(parsedLines[0]) : '';
             } else {
-                this.currentLine = `[${formatTime(parsedLines[this.currentIndex].time)}] ${parsedLines[this.currentIndex].text}`;
+                this.currentLine = fmt(parsedLines[this.currentIndex]);
                 this.nextLine = this.currentIndex + 1 < parsedLines.length
-                    ? `[${formatTime(parsedLines[this.currentIndex + 1].time)}] ${parsedLines[this.currentIndex + 1].text}`
+                    ? fmt(parsedLines[this.currentIndex + 1])
                     : '';
             }
 
@@ -135,6 +136,11 @@ class LyricsPresenter {
                     result.push({
                         time: parseInt(match[1]) * 60 + parseFloat(match[2]),
                         text,
+                    });
+                } else {
+                    result.push({
+                        time: parseInt(match[1]) * 60 + parseFloat(match[2]),
+                        text: '~ ♪♪♪ ~',
                     });
                 }
             }

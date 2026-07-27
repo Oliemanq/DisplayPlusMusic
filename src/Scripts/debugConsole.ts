@@ -5,7 +5,7 @@ export function enableMobileConsole() {
     consoleDiv.style.bottom = '0';
     consoleDiv.style.left = '0';
     consoleDiv.style.width = '100%';
-    consoleDiv.style.height = '1000px';
+    consoleDiv.style.height = '400px';
     consoleDiv.style.backgroundColor = 'rgba(0,0,0,0.5)';
     consoleDiv.style.color = '#0f0';
     consoleDiv.style.overflowY = 'scroll';

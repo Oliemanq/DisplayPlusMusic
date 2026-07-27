@@ -8,19 +8,19 @@ export async function eventHandler() {
     const unsubscribe = bridge.onEvenHubEvent(async (event) => {
         const listEvent = event.listEvent;
         const sysEvent = event.sysEvent;
-        if (listEvent) {
+        if (listEvent) { // Tapping on list item (buttons)
             console.log(listEvent.currentSelectItemIndex + " " + listEvent.currentSelectItemName);
                 if (spotifyPresenter.getActiveSource() === 'navidrome') {
                     return;
                 }
-            switch (listEvent.currentSelectItemIndex) {
-                case 1:
+            switch (listEvent.currentSelectItemIndex) { //checking what button was clicked
+                case 1:  //button 1, pause play
                     spotifyPresenter.song_pauseplay();
                     break;
-                case 2:
+                case 2:  //button 2, forward
                     spotifyPresenter.song_forward();
                     break;
-                default:
+                default:  //button 3, back
                     spotifyPresenter.song_back();
                     break;
             }

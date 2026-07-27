@@ -85,20 +85,20 @@ function buildContainerConfig(songInfoText: string, playbackBarText: string, sho
                 containerName: 'songInfo',
                 content: songInfoText,
                 // zOrderIndex: 1,
-                isEventCapture: showPlaybackButtons ? 0 : 1,
+                isEventCapture: 0,
             }),
             new TextContainerProperty({
                 xPosition: 0,
-                yPosition: 155,
+                yPosition: 150,
                 width: MAX_WIDTH,
-                height: MAX_HEIGHT - 155,
+                height: MAX_HEIGHT - 150,
                 borderRadius: 6,
                 borderWidth: 0,
                 containerID: 4,
                 containerName: 'playbackBar',
                 content: playbackBarText,
                 // zOrderIndex: 1,
-                isEventCapture: 0,
+                isEventCapture: showPlaybackButtons ? 0 : 1,
             }),
         ],
     };
@@ -153,10 +153,10 @@ export async function createView(song: Song): Promise<void> {
 
         const songInfoText = `${song.title}\n${song.artist}\n${song.album}`;
         const playbackBarText =
-            `${formatTime(song.progressSeconds)}/${formatTime(song.durationSeconds)}\n` +
+            `${formatTime(song.progressSeconds)}               -${formatTime(Math.max(0, song.durationSeconds - song.progressSeconds))}\n` +
             `${song.createPlaybackBar(MAX_WIDTH)}\n` +
-            `  ${lyricsPresenter.currentLine}\n` +
-            `    ${lyricsPresenter.nextLine}`;
+            ` [  ${lyricsPresenter.currentLine}  ]\n` +
+            `        ${lyricsPresenter.nextLine}`;
 
         const activeSource = spotifyPresenter.getActiveSource();
         const showPlaybackButtons = activeSource !== 'navidrome';

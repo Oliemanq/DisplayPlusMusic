@@ -167,9 +167,17 @@ class NavidromeModel {
             const serverProgress = (selectedEntry.positionMs ?? 0) / 1000;
             let progressSeconds = serverProgress;
 
-            if (sameTrack && this.lastSnapshotAt > 0) {
+            const playbackStateChanged = isPlaying !== this.lastSnapshotIsPlaying;
+
+            if (!isPlaying) {
+                // When paused/stopped, the server position is stable and authoritative —
+                // always snap to it so we never drift ahead of the actual paused position.
+                progressSeconds = serverProgress;
+            } else if (sameTrack && this.lastSnapshotAt > 0 && !playbackStateChanged) {
+                // Continuously playing same track: interpolate locally between polls for
+                // smooth progress, then correct if we've drifted too far from the server.
                 const elapsedSeconds = Math.max(0, (now - this.lastSnapshotAt) / 1000);
-                const localProgress = this.lastSnapshotProgressSeconds + (this.lastSnapshotIsPlaying ? elapsedSeconds : 0);
+                const localProgress = this.lastSnapshotProgressSeconds + elapsedSeconds;
                 const drift = Math.abs(serverProgress - localProgress);
                 if (drift > 1.5) {
                     console.log(`[Navidrome] Drift corrected: ${drift.toFixed(2)}s (local: ${localProgress.toFixed(2)}s, server: ${serverProgress.toFixed(2)}s)`);
@@ -178,6 +186,7 @@ class NavidromeModel {
                     progressSeconds = localProgress;
                 }
             }
+            // else: new track or state transition (pause→play) — use serverProgress directly
 
             if (song.durationSeconds > 0) {
                 progressSeconds = Math.min(progressSeconds, song.durationSeconds);
@@ -189,6 +198,11 @@ class NavidromeModel {
 
             if (!sameTrack) {
                 this.currentSong = song;
+                // New song — fetch art in the background, same as Spotify's pattern
+                const coverArtId = selectedEntry.coverArt ?? selectedEntry.albumId ?? selectedEntry.id ?? '';
+                if (coverArtId) {
+                    this.fetchArtAsync(coverArtId, this.currentSong).catch(console.error);
+                }
             } else {
                 this.currentSong.addTitle(song.title);
                 this.currentSong.addArtist(song.artist);
@@ -204,10 +218,6 @@ class NavidromeModel {
             this.lastSnapshotSongID = song.songID;
             this.lastSnapshotProgressSeconds = progressSeconds;
             this.lastSnapshotIsPlaying = isPlaying;
-
-            if (selectedEntry.coverArt || selectedEntry.albumId || selectedEntry.id) {
-                this.fetchArtAsync(selectedEntry.coverArt ?? selectedEntry.albumId ?? selectedEntry.id ?? '', this.currentSong).catch(console.error);
-            }
 
             return this.currentSong;
         } catch (error) {

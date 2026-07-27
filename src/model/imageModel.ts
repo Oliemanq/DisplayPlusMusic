@@ -14,7 +14,7 @@ class ImageModel {
       }
 
       const blob = await response.blob();
-      console.log(`[ImageModel] _fetchBlob successfully built blob of size: ${blob.size}`);
+      // console.log(`[ImageModel] _fetchBlob successfully built blob of size: ${blob.size}`);
       return blob;
     } catch (error) {
       console.error(`[ImageModel] Error in _fetchBlob:`, error);
@@ -23,18 +23,18 @@ class ImageModel {
   }
 
   async downloadImage(source: string | Blob, targetWidth?: number, targetHeight?: number): Promise<Uint8Array> {
-    console.log(`[ImageModel] downloadImage started (target: ${targetWidth}x${targetHeight})`);
+    // console.log(`[ImageModel] downloadImage started (target: ${targetWidth}x${targetHeight})`);
     const blob = await this._fetchBlob(source);
     const bitmap = await createImageBitmap(blob);
     let width = bitmap.width;
     let height = bitmap.height;
-    console.log(`[ImageModel] downloadImage original bitmap dimensions: ${width}x${height}`);
+    // console.log(`[ImageModel] downloadImage original bitmap dimensions: ${width}x${height}`);
 
     // Use target dimensions if provided
     if (targetWidth && targetHeight) {
       width = targetWidth;
       height = targetHeight;
-      console.log(`[ImageModel] downloadImage resizing to target dimensions: ${width}x${height}`);
+      // console.log(`[ImageModel] downloadImage resizing to target dimensions: ${width}x${height}`);
     }
 
     let canvas: OffscreenCanvas | HTMLCanvasElement;
@@ -83,7 +83,7 @@ class ImageModel {
       }
     });
 
-    console.log(`[ImageModel] downloadImage pngBlob generated, size: ${pngBlob.size}`);
+    // console.log(`[ImageModel] downloadImage pngBlob generated, size: ${pngBlob.size}`);
 
     const arrayBuffer = await pngBlob.arrayBuffer();
     return new Uint8Array(arrayBuffer);
@@ -122,13 +122,13 @@ class ImageModel {
     const bitmap = await createImageBitmap(blob);
     let width = bitmap.width;
     let height = bitmap.height;
-    console.log(`[ImageModel] downloadImageAsGrayscalePng original bitmap dimensions: ${width}x${height}`);
+    // console.log(`[ImageModel] downloadImageAsGrayscalePng original bitmap dimensions: ${width}x${height}`);
 
     // Use target dimensions if provided
     if (targetWidth && targetHeight) {
       width = targetWidth;
       height = targetHeight;
-      console.log(`[ImageModel] downloadImageAsGrayscalePng resizing to target dimensions: ${width}x${height}`);
+      // console.log(`[ImageModel] downloadImageAsGrayscalePng resizing to target dimensions: ${width}x${height}`);
     }
 
     let canvas: OffscreenCanvas | HTMLCanvasElement;

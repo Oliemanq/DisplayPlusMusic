@@ -108,7 +108,7 @@ class LyricsPresenter {
             this.currentIndex = this.getActiveIndex(parsedLines, progress);
 
             const fmt = (line: LyricLine) =>
-              line.text === '~ ♪♪♪ ~' ? `     ${line.text}` : `[${formatTime(line.time)}] ${line.text}`;
+              line.text === '~ ♪♪♪ ~' ? `     ${line.text}` : `${line.text}`; //[${formatTime(line.time)}]
 
             if (this.currentIndex === -1) {
                 this.currentLine = '';

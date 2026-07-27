@@ -1,9 +1,9 @@
 {
-  "package_id": "com.oliemanq.displayplusmusic",
+  "package_id": "com.oliemanq.displayplusmusictest2",
   "edition": "202601",
   "name": "DisplayPlus Music",
   "author": "oliemanq",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "min_app_version": "2.1.0",
   "min_sdk_version": "0.0.9",
   "entrypoint": "index.html",

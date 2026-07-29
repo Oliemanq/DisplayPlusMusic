@@ -1,5 +1,4 @@
 import { fetchLyrics } from '../model/lyricsModel';
-import { formatTime } from '../Scripts/formatTime';
 import Song from '../model/songModel';
 import spotifyPresenter from './spotifyPresenter';
 
@@ -18,7 +17,6 @@ class LyricsPresenter {
 
     private nextSongID = '';
     private nextSyncedLyrics = '';
-    private nextPlainLyrics = '';
     private nextLyricsSource: 'local server' | 'web' | '' = '';
 
     private isFetching = false;
@@ -77,11 +75,14 @@ class LyricsPresenter {
         try {
             const lyrics = await fetchLyrics(nextSong);
             this.nextSyncedLyrics = lyrics.syncedLyrics ?? '';
-            this.nextPlainLyrics = lyrics.plainLyrics ?? '';
             this.nextLyricsSource = lyrics.source ?? '';
         } catch (e) {
             console.error('[LyricsPresenter] cacheNextLyrics error:', e);
         }
+    }
+
+    get currentLineFormatted(): string {
+        return this.currentLine === '' ? `` : ` [   ${this.currentLine}   ]`;
     }
 
     getLyricsSourceLabel(): string {
@@ -107,16 +108,13 @@ class LyricsPresenter {
             const progress = spotifyPresenter.currentSong.progressSeconds + this.BLUETOOTH_DELAY;
             this.currentIndex = this.getActiveIndex(parsedLines, progress);
 
-            const fmt = (line: LyricLine) =>
-              line.text === '~ ♪♪♪ ~' ? `     ${line.text}` : `${line.text}`; //[${formatTime(line.time)}]
-
             if (this.currentIndex === -1) {
                 this.currentLine = '';
-                this.nextLine = parsedLines.length > 0 ? fmt(parsedLines[0]) : '';
+                this.nextLine = parsedLines.length > 0 ? parsedLines[0].text : '';
             } else {
-                this.currentLine = fmt(parsedLines[this.currentIndex]);
+                this.currentLine = parsedLines[this.currentIndex].text;
                 this.nextLine = this.currentIndex + 1 < parsedLines.length
-                    ? fmt(parsedLines[this.currentIndex + 1])
+                    ? parsedLines[this.currentIndex + 1].text
                     : '';
             }
 
@@ -144,6 +142,9 @@ class LyricsPresenter {
                     });
                 }
             }
+        }
+        if (result.length > 0 && result[0].time > 5) {
+            result.unshift({ time: 0, text: '~ ♪♪♪ ~' });
         }
         return result;
     }

@@ -66,7 +66,10 @@ class NavidromeModel {
     private lastSnapshotProgressSeconds = 0;
     private lastSnapshotIsPlaying = false;
     private selectedClientName = '';
-    private playbackClients: NavidromePlaybackClient[] = [];
+  private playbackClients: NavidromePlaybackClient[] = [];
+  private DRIFT_CORRECTION = 0.2;
+
+
 
     async init(): Promise<boolean> {
         this.baseUrl = normalizeBaseUrl((await storage.getItem('navidrome_base_url')) ?? '');
@@ -179,7 +182,7 @@ class NavidromeModel {
                 const elapsedSeconds = Math.max(0, (now - this.lastSnapshotAt) / 1000);
                 const localProgress = this.lastSnapshotProgressSeconds + elapsedSeconds;
                 const drift = Math.abs(serverProgress - localProgress);
-                if (drift > 1.5) {
+                if (drift > this.DRIFT_CORRECTION) {
                     console.log(`[Navidrome] Drift corrected: ${drift.toFixed(2)}s (local: ${localProgress.toFixed(2)}s, server: ${serverProgress.toFixed(2)}s)`);
                     progressSeconds = serverProgress;
                 } else {

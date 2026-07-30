@@ -105,7 +105,11 @@ class LyricsPresenter {
         console.log('current word index ' + this.currentWordIndex)
 
         if (i == this.currentWordIndex) {
-          line += `" `
+          if (this.currentLineWords[this.currentWordIndex].text.endsWith("'") || this.currentLineWords[this.currentWordIndex].text.endsWith("\"")) {
+            line += ` " `
+          } else {
+            line += `" `
+          }
         } else {
           line += ` `
         }

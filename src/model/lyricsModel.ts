@@ -62,8 +62,13 @@ function formatLrcTimestamp(totalMilliseconds: number, brackets: '[]' | '<>'): s
  * Builds a single LRC line, embedding per-word/syllable timing tags (the "enhanced" or
  * ".elrc" convention: `[00:12.00]<00:12.00>word <00:12.50>word2`) when cue-level timing
  * is available from the source data.
+ *
+ * When `end` is provided, a trailing timestamp tag with no following text is appended
+ * (e.g. `...<00:15.00>word2<00:15.60>`). This is the standard enhanced-LRC convention for
+ * marking when the last word/syllable in the line finishes, which downstream consumers
+ * use to detect instrumental gaps between word-timed lines.
  */
-function buildEnhancedLrcLine(start: number, value: string, cues: NavidromeCue[] | undefined): string {
+function buildEnhancedLrcLine(start: number, value: string, cues: NavidromeCue[] | undefined, end?: number): string {
     const lineTag = formatLrcTimestamp(start, '[]');
     if (!cues || cues.length === 0) {
         return `${lineTag}${value}`;
@@ -74,7 +79,9 @@ function buildEnhancedLrcLine(start: number, value: string, cues: NavidromeCue[]
         .map(cue => `${formatLrcTimestamp(cue.start!, '<>')}${cue.value ?? ''}`)
         .join('');
 
-    return `${lineTag}${wordTags || value}`;
+    const endTag = typeof end === 'number' ? formatLrcTimestamp(end, '<>') : '';
+
+    return `${lineTag}${wordTags || value}${endTag}`;
 }
 
 function lyricsFromStructuredLyricsList(lyricsList: NavidromeLyricsList | undefined) {
@@ -94,7 +101,7 @@ function lyricsFromStructuredLyricsList(lyricsList: NavidromeLyricsList | undefi
     const syncedLyrics = cueLines && cueLines.length > 0
         ? cueLines
             .filter(cueLine => typeof cueLine.start === 'number')
-            .map(cueLine => buildEnhancedLrcLine(cueLine.start!, cueLine.value ?? '', cueLine.cue))
+            .map(cueLine => buildEnhancedLrcLine(cueLine.start!, cueLine.value ?? '', cueLine.cue, cueLine.end))
             .join('\n')
         : isSynced
             ? lines

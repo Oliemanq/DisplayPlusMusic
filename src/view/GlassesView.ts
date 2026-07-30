@@ -29,6 +29,10 @@ let isSendingImage = false;
 let lastSongID = "";
 let lastRenderedSource = '';
 let imageRetryAt = 0;
+// Last content actually confirmed sent to each container — lets us skip redundant
+// bridge round-trips (a major source of glasses-side lyric latency) when nothing changed.
+let lastSentSongInfoText = '';
+let lastSentPlaybackBarText = '';
 
 /** Resolves with fallback value if the promise times out or throws. */
 function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
@@ -156,13 +160,15 @@ export async function createView(song: Song): Promise<void> {
 
         const activeSource = spotifyPresenter.getActiveSource();
         const showPlaybackButtons = activeSource !== 'navidrome';
-        const config = buildContainerConfig(songInfoText, playbackBarText, showPlaybackButtons);
+        // Only built when actually needed (create/rebuild paths) — constructing the full
+        // container tree on every 10ms tick is pure overhead on the hot text-upgrade path.
+        const buildConfig = () => buildContainerConfig(songInfoText, playbackBarText, showPlaybackButtons);
 
         if (lastRenderedSource !== activeSource) {
             lastRenderedSource = activeSource;
             if (isPageCreated) {
                 const rebuilt = await withTimeout(
-                    bridge.rebuildPageContainer(new RebuildPageContainer(config)),
+                    bridge.rebuildPageContainer(new RebuildPageContainer(buildConfig())),
                     5000,
                     false,
                 );
@@ -170,6 +176,8 @@ export async function createView(song: Song): Promise<void> {
                     await new Promise(r => setTimeout(r, 300));
                     lastSongID = '';
                     imageRetryAt = 0;
+                    lastSentSongInfoText = songInfoText;
+                    lastSentPlaybackBarText = playbackBarText;
                 }
                 return;
             }
@@ -178,7 +186,7 @@ export async function createView(song: Song): Promise<void> {
         // First-time setup: create the page container
         if (!isPageCreated) {
             const result = await withTimeout(
-                bridge.createStartUpPageContainer(new CreateStartUpPageContainer(config)),
+                bridge.createStartUpPageContainer(new CreateStartUpPageContainer(buildConfig())),
                 5000,
                 StartUpPageCreateResult.invalid,
             );
@@ -187,6 +195,10 @@ export async function createView(song: Song): Promise<void> {
             if (result === StartUpPageCreateResult.success || result === StartUpPageCreateResult.invalid) {
                 // success = created fresh; invalid = already exists — either way we're ready
                 isPageCreated = true;
+                // The initial config already carries this content, so treat it as sent —
+                // avoids one redundant textContainerUpgrade call on the very next tick.
+                lastSentSongInfoText = songInfoText;
+                lastSentPlaybackBarText = playbackBarText;
             } else {
                 // oversize or outOfMemory — can't recover, don't mark as created
                 console.error('[GlassesView] Fatal container error:', result);
@@ -194,8 +206,11 @@ export async function createView(song: Song): Promise<void> {
             }
         }
 
-        // Normal update: upgrade text content in-place (no screen clear)
-        const ok1 = await withTimeout(
+        // songInfo (title/artist/album) rarely changes between quick-ticks, but every ms spent
+        // waiting on its round-trip directly delays the time-critical playbackBar/lyrics update
+        // that follows. Skip the bridge call entirely when the content hasn't actually changed.
+        const songInfoChanged = songInfoText !== lastSentSongInfoText;
+        const songInfoOk = !songInfoChanged || await withTimeout(
             bridge.textContainerUpgrade(new TextContainerUpgrade({
                 containerID: 3,
                 containerName: 'songInfo',
@@ -205,12 +220,12 @@ export async function createView(song: Song): Promise<void> {
             false,
         );
 
-        if (!ok1) {
+        if (songInfoChanged && !songInfoOk) {
             // Text upgrade failed — fall back to a full rebuild so the container
             // is definitely in a known state before next frame
             console.warn('[GlassesView] textContainerUpgrade failed, rebuilding...');
             const rebuilt = await withTimeout(
-                bridge.rebuildPageContainer(new RebuildPageContainer(config)),
+                bridge.rebuildPageContainer(new RebuildPageContainer(buildConfig())),
                 5000,
                 false,
             );
@@ -218,19 +233,28 @@ export async function createView(song: Song): Promise<void> {
                 await new Promise(r => setTimeout(r, 300));
                 lastSongID = ''; // force image resend after rebuild
                 imageRetryAt = 0;
+                lastSentSongInfoText = songInfoText;
+                lastSentPlaybackBarText = playbackBarText;
             }
             return; // Either way, skip this frame and retry next tick
         }
+        if (songInfoChanged) lastSentSongInfoText = songInfoText;
 
-        await withTimeout(
-            bridge.textContainerUpgrade(new TextContainerUpgrade({
-                containerID: 4,
-                containerName: 'playbackBar',
-                content: playbackBarText,
-            })),
-            2000,
-            false,
-        );
+        // This is the time-critical path (progress bar + lyrics) — skip the call entirely when
+        // nothing changed since the last confirmed send, so ticks between lyric-word/line changes
+        // cost zero bridge round-trips instead of one.
+        if (playbackBarText !== lastSentPlaybackBarText) {
+            const ok2 = await withTimeout(
+                bridge.textContainerUpgrade(new TextContainerUpgrade({
+                    containerID: 4,
+                    containerName: 'playbackBar',
+                    content: playbackBarText,
+                })),
+                2000,
+                false,
+            );
+            if (ok2) lastSentPlaybackBarText = playbackBarText;
+        }
 
         // Kick off image send in background if needed
         if (song.albumArtRaw?.length > 0 && song.songID !== lastSongID) {

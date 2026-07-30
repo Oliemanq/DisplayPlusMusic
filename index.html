@@ -511,6 +511,19 @@
             gap: 4px;
         }
 
+        .lyric-word {
+            display: inline-block;
+            opacity: 0.5;
+            font-size: 1em;
+            transition: opacity 0.15s ease, font-size 0.15s ease;
+        }
+
+        .lyric-word-active {
+            opacity: 1;
+            font-size: calc(1em + 2px);
+            font-weight: 700;
+        }
+
         .subcontainer {
             display: flex;
             flex-direction: column;

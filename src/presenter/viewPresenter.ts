@@ -211,7 +211,7 @@ class ViewPresenter {
             setText('song-artist', song.artist);
             setText('song-album', song.album);
             setText('song-current-time', formatTime(song.progressSeconds));
-            setText('song-total-time', formatTime(song.durationSeconds));
+            setText('song-total-time', `${formatTime(song.durationSeconds)}`);
             this.renderNavidromeClients();
 
             if (song.songID !== this.lastSongID) {

@@ -1,6 +1,12 @@
 import Song, { song_placeholder } from './songModel';
 import { downloadImageAsGrayscalePng, downloadImage } from './imageModel';
 import { storage } from '../utils/storage';
+import playbackOffsetModel from './playbackOffsetModel';
+
+function clampProgress(seconds: number, durationSeconds: number): number {
+  const clamped = durationSeconds > 0 ? Math.min(seconds, durationSeconds) : seconds;
+  return Math.max(0, clamped);
+}
 
 type NavidromeNowPlayingEntry = {
   id?: string;
@@ -195,7 +201,9 @@ class NavidromeModel {
         progressSeconds = Math.min(progressSeconds, song.durationSeconds);
       }
 
-      song.addProgressSeconds(progressSeconds);
+      const displayProgressSeconds = clampProgress(progressSeconds + playbackOffsetModel.getOffsetSeconds(), song.durationSeconds);
+
+      song.addProgressSeconds(displayProgressSeconds);
       song.addisPlaying(isPlaying);
       song.addChangedState(song.songID !== this.currentSong.songID);
 
@@ -212,7 +220,7 @@ class NavidromeModel {
         this.currentSong.addFeatures(song.features);
         this.currentSong.addAlbum(song.album);
         this.currentSong.addDurationSeconds(song.durationSeconds);
-        this.currentSong.addProgressSeconds(progressSeconds);
+        this.currentSong.addProgressSeconds(displayProgressSeconds);
         this.currentSong.addisPlaying(isPlaying);
         this.currentSong.addChangedState(false);
       }

@@ -4,6 +4,7 @@ import { storage } from '../utils/storage';
 import spotifyAuthModel from '../model/spotifyAuthModel';
 import Song from '../model/songModel';
 import { formatTime } from '../Scripts/formatTime';
+import playbackOffsetModel, { OFFSET_STEP_MS } from '../model/playbackOffsetModel';
 
 function escapeHtml(value: string): string {
     return value
@@ -48,6 +49,18 @@ class ViewPresenter {
         document.getElementById('previous-track')?.addEventListener('click', () => {
             this.backTrack();
         });
+
+        document.getElementById('offset-decrease')?.addEventListener('click', () => {
+            this.adjustPlaybackOffset(-OFFSET_STEP_MS);
+        });
+        document.getElementById('offset-increase')?.addEventListener('click', () => {
+            this.adjustPlaybackOffset(OFFSET_STEP_MS);
+        });
+        document.getElementById('playback-offset-value')?.addEventListener('click', () => {
+            this.setPlaybackOffset(0);
+        });
+
+        playbackOffsetModel.init().then(() => this.renderPlaybackOffset());
 
         clientList?.addEventListener('click', async (event) => {
             const target = event.target as HTMLElement;
@@ -137,6 +150,22 @@ class ViewPresenter {
                 }
             });
         });
+    }
+
+    async adjustPlaybackOffset(deltaMs: number) {
+        await playbackOffsetModel.adjust(deltaMs);
+        this.renderPlaybackOffset();
+    }
+    async setPlaybackOffset(ms: number) {
+        await playbackOffsetModel.set(ms);
+        this.renderPlaybackOffset();
+    }
+
+    renderPlaybackOffset() {
+        const el = document.getElementById('playback-offset-value');
+        if (!el) return;
+        const offsetMs = playbackOffsetModel.getOffsetMs();
+        el.textContent = `${offsetMs > 0 ? '+' : ''}${offsetMs}ms`;
     }
 
     forwardTrack() {

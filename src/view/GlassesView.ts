@@ -156,7 +156,7 @@ export async function createView(song: Song): Promise<void> {
         }
 
         const songInfoText = `${song.title}\n${song.artist}\n${song.album}`;
-        const playbackBarText = `${formatTime(song.progressSeconds)}               -${formatTime(Math.max(0, song.durationSeconds - song.progressSeconds))}   ${lyricsPresenter.hasWordTiming ? 'has karaoke' : ''}\n` +`${song.createPlaybackBar(MAX_WIDTH)}\n` + `${lyricsPresenter.currentLineFormatted}\n` + `           ${lyricsPresenter.nextLine}`;
+        const playbackBarText = `${formatTime(song.progressSeconds)}               -${formatTime(Math.max(0, song.durationSeconds - song.progressSeconds))}\n` +`${song.createPlaybackBar(MAX_WIDTH)}\n` + `${lyricsPresenter.currentLineFormatted}\n` + `           ${lyricsPresenter.nextLine}`;
 
         const activeSource = spotifyPresenter.getActiveSource();
         const showPlaybackButtons = activeSource !== 'navidrome';

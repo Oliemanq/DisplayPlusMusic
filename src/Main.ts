@@ -4,6 +4,7 @@ import { enableMobileConsole } from './Scripts/debugConsole';
 import { fetchLyrics } from './model/lyricsModel';
 import pollingPresenter from './presenter/pollingPresenter';
 import viewPresenter from './presenter/viewPresenter';
+import playbackOffsetModel from './model/playbackOffsetModel';
 
 async function main() {
     // enableMobileConsole();
@@ -11,6 +12,7 @@ async function main() {
 
     viewPresenter.initListeners();
 
+    await playbackOffsetModel.init();
     await spotifyPresenter.initActiveSource();
 
     pollingPresenter.startPolling();

@@ -4,6 +4,12 @@ import { setPlaceholderLoginHint } from '../model/songModel';
 import { downloadImageAsGrayscalePng, downloadImage } from './imageModel';
 import { storage } from '../utils/storage';
 import spotifyAuthModel from './spotifyAuthModel';
+import playbackOffsetModel from './playbackOffsetModel';
+
+function clampProgress(seconds: number, durationSeconds: number): number {
+    const clamped = durationSeconds > 0 ? Math.min(seconds, durationSeconds) : seconds;
+    return Math.max(0, clamped);
+}
 
 let spotifysdk!: SpotifyApi;
 
@@ -126,7 +132,8 @@ class SpotifyModel {
                 song.addFeatures(track.artists.slice(1).map(a => a.name));
                 song.addAlbum(track.album.name);
                 song.addDurationSeconds(track.duration_ms / 1000);
-                song.addProgressSeconds(result.progress_ms / 1000);
+                const rawProgress = result.progress_ms / 1000;
+                song.addProgressSeconds(clampProgress(rawProgress + playbackOffsetModel.getOffsetSeconds(), song.durationSeconds));
                 song.addisPlaying(result.is_playing);
                 song.addChangedState(true);
 
@@ -151,10 +158,12 @@ class SpotifyModel {
             this.lastSong.addisPlaying(result.is_playing);
 
             const serverProgress = result.progress_ms / 1000;
-            const drift = Math.abs(serverProgress - this.lastSong.progressSeconds);
+            const offsetSeconds = playbackOffsetModel.getOffsetSeconds();
+            const estimatedRawProgress = this.lastSong.progressSeconds - offsetSeconds;
+            const drift = Math.abs(serverProgress - estimatedRawProgress);
             if (drift > 0.5) {
                 console.log(`[Spotify] Drift corrected: ${drift.toFixed(2)}s`);
-                this.lastSong.addProgressSeconds(serverProgress);
+                this.lastSong.addProgressSeconds(clampProgress(serverProgress + offsetSeconds, this.lastSong.durationSeconds));
             }
 
             this.lastSong.addChangedState(false);

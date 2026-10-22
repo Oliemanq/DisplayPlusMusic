@@ -120,8 +120,9 @@ function lyricsFromStructuredLyricsList(lyricsList: NavidromeLyricsList | undefi
     };
 }
 
-async function fetchLyricsFromNavidrome(song: Song) {
-    if (spotifyPresenter.getActiveSource() !== 'navidrome' || song.songID === '0') {
+async function fetchLyricsFromNavidrome(song: Song | any) {
+    const songID = song.songID || song.id;
+    if (spotifyPresenter.getActiveSource() !== 'navidrome' || songID === '0') {
         return { plainLyrics: null, syncedLyrics: null, source: '' as const };
     }
 
@@ -135,7 +136,7 @@ async function fetchLyricsFromNavidrome(song: Song) {
 
     const url = new URL(`${baseUrl.replace(/\/+$/, '')}/rest/getLyricsBySongId.view`);
     url.search = buildNavidromeAuthParams(username, password).toString();
-    url.searchParams.set('id', song.songID);
+    url.searchParams.set('id', songID);
     // Request word/syllable-level cue timing (OpenSubsonic songLyrics v2) when the server supports it.
     // Servers that don't understand this parameter simply ignore it and return v1 line-level data.
     url.searchParams.set('enhanced', 'true');
@@ -150,12 +151,15 @@ async function fetchLyricsFromNavidrome(song: Song) {
     return { ...lyrics, source: 'local server' as const };
 }
 
-async function fetchLyrics(song: Song) {
+async function fetchLyrics(song: Song | any) {
     const title = song.title.trim().toLowerCase();
     const artist = song.artist.trim().toLowerCase();
+    const songID = song.songID || song.id;
+    const album = song.album || "";
+    const durationSeconds = song.durationSeconds || 0;
 
     if (
-        song.songID === '0' ||
+        songID === '0' ||
         title === '' ||
         title === 'no song found' ||
         artist.includes('please log in via')
@@ -180,11 +184,11 @@ async function fetchLyrics(song: Song) {
     const url = new URL("https://lrclib.net/api/get");
     url.searchParams.append("track_name", song.title);
     url.searchParams.append("artist_name", song.artist);
-    if (song.album && song.album !== "None") {
-        url.searchParams.append("album_name", song.album);
+    if (album && album !== "None") {
+        url.searchParams.append("album_name", album);
     }
-    if (song.durationSeconds > 0) {
-        url.searchParams.append("duration", Math.round(song.durationSeconds).toString());
+    if (durationSeconds > 0) {
+        url.searchParams.append("duration", Math.round(durationSeconds).toString());
     }
 
     try {

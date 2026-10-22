@@ -1,25 +1,9 @@
-import { EvenAppBridge, waitForEvenAppBridge } from "@evenrealities/even_hub_sdk";
-
-function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
-    return Promise.race([
-        promise.catch(() => fallback),
-        new Promise<T>(resolve => setTimeout(() => resolve(fallback), ms)),
-    ]);
-}
-
-let bridgePromise: Promise<EvenAppBridge | null> | null = null;
-
-function getBridge(): Promise<EvenAppBridge | null> {
-    if (!bridgePromise) {
-        bridgePromise = withTimeout(waitForEvenAppBridge(), 1000, null);
-    }
-    return bridgePromise;
-}
+import { system } from '../capabilities/system';
 
 export const storage = {
     setItem: async (key: string, value: string): Promise<void> => {
         try {
-            const bridge = await getBridge();
+            const bridge = await system.getBridge();
             if (bridge) {
                 await bridge.setLocalStorage(key, value);
             } else {
@@ -32,7 +16,7 @@ export const storage = {
     },
     getItem: async (key: string): Promise<string | null> => {
         try {
-            const bridge = await getBridge();
+            const bridge = await system.getBridge();
             if (bridge) {
                 return await bridge.getLocalStorage(key);
             } else {
@@ -45,7 +29,7 @@ export const storage = {
     },
     removeItem: async (key: string): Promise<void> => {
         try {
-            const bridge = await getBridge();
+            const bridge = await system.getBridge();
             if (bridge) {
                 await bridge.setLocalStorage(key, "");
             } else {

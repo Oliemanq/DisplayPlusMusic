@@ -7,7 +7,7 @@ import viewPresenter from './presenter/viewPresenter';
 import playbackOffsetModel from './model/playbackOffsetModel';
 
 async function main() {
-    enableMobileConsole();
+    // enableMobileConsole();
     console.log("App starting...");
 
     viewPresenter.initListeners();

@@ -19,6 +19,7 @@ import { formatTime } from '../Scripts/formatTime';
 import Song from '../model/songModel';
 import lyricsPresenter from '../presenter/lyricsPresenter';
 import spotifyPresenter from '../presenter/spotifyPresenter';
+import type { MusicSource } from '../model/musicSource';
 
 const MAX_HEIGHT = 288;
 const MAX_WIDTH = 576;
@@ -54,7 +55,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
 /** Builds the container layout for mini mode. */
 function buildMiniModeConfig(songInfoText: string, lyricsText: string) {
     return {
-        containerTotalNum: 3,
+        containerTotalNum: 2,
         imageObject: [],
         menuObject: new MenuContainerProperty({
             menuItems: [
@@ -101,16 +102,17 @@ function buildMiniModeConfig(songInfoText: string, lyricsText: string) {
 function buildContainerConfig(
     songInfoText: string,
     playbackBarText: string,
-    showPlaybackButtons: boolean,
+    source: MusicSource,
     isMiniMode: boolean,
-    song: Song,
 ) {
     if (isMiniMode) {
         return buildMiniModeConfig(songInfoText, playbackBarText);
     }
 
+    const showPlaybackButtons = source === 'spotify';
+
     return {
-        containerTotalNum: showPlaybackButtons ? 5 : 4,
+        containerTotalNum: showPlaybackButtons ? 4 : 3,
         imageObject: [
             new ImageContainerProperty({
                 xPosition: 2,
@@ -239,27 +241,29 @@ export async function createView(song: Song): Promise<void> {
               `         ${truncateText(lyricsPresenter.nextLine, lyricsPresenter.currentLineFormatted.length < 35 ? 35 : lyricsPresenter.currentLineFormatted.length)}`;
 
         const activeSource = spotifyPresenter.getActiveSource();
-        const showPlaybackButtons = activeSource !== 'navidrome';
         // Only built when actually needed (create/rebuild paths) — constructing the full
         // container tree on every 10ms tick is pure overhead on the hot text-upgrade path.
-        const buildConfig = () => buildContainerConfig(songInfoText, playbackBarText, showPlaybackButtons, isMiniMode, song);
+        const buildConfig = () => buildContainerConfig(songInfoText, playbackBarText, activeSource, isMiniMode);
 
         if (lastRenderedSource !== activeSource || lastMiniMode !== isMiniMode) {
-            lastRenderedSource = activeSource;
-            lastMiniMode = isMiniMode;
             if (isPageCreated) {
                 const rebuilt = await withTimeout(
                     bridge.rebuildPageContainer(new RebuildPageContainer(buildConfig())),
                     5000,
                     false,
                 );
-                if (rebuilt) {
-                    await new Promise(r => setTimeout(r, 300));
-                    lastSongID = '';
-                    imageRetryAt = 0;
-                    lastSentSongInfoText = songInfoText;
-                    lastSentPlaybackBarText = playbackBarText;
+                if (!rebuilt) {
+                    console.error(`[GlassesView] Failed to rebuild ${activeSource} layout`);
+                    return;
                 }
+
+                lastRenderedSource = activeSource;
+                lastMiniMode = isMiniMode;
+                await new Promise(r => setTimeout(r, 300));
+                lastSongID = '';
+                imageRetryAt = 0;
+                lastSentSongInfoText = songInfoText;
+                lastSentPlaybackBarText = playbackBarText;
                 return;
             }
         }
@@ -273,11 +277,33 @@ export async function createView(song: Song): Promise<void> {
             );
             console.log('[GlassesView] createStartUpPageContainer:', result);
 
-            if (result === StartUpPageCreateResult.success || result === StartUpPageCreateResult.invalid) {
-                // success = created fresh; invalid = already exists — either way we're ready
+            if (result === StartUpPageCreateResult.success) {
                 isPageCreated = true;
+                lastRenderedSource = activeSource;
+                lastMiniMode = isMiniMode;
                 // The initial config already carries this content, so treat it as sent —
                 // avoids one redundant textContainerUpgrade call on the very next tick.
+                lastSentSongInfoText = songInfoText;
+                lastSentPlaybackBarText = playbackBarText;
+            } else if (result === StartUpPageCreateResult.invalid) {
+                // An existing page can retain the layout from a previous source.
+                // Rebuild it so source-specific containers, such as Spotify controls,
+                // are removed when Navidrome is active.
+                const rebuilt = await withTimeout(
+                    bridge.rebuildPageContainer(new RebuildPageContainer(buildConfig())),
+                    5000,
+                    false,
+                );
+                if (!rebuilt) {
+                    console.error('[GlassesView] Failed to rebuild existing page');
+                    return;
+                }
+
+                isPageCreated = true;
+                lastRenderedSource = activeSource;
+                lastMiniMode = isMiniMode;
+                lastSongID = '';
+                imageRetryAt = 0;
                 lastSentSongInfoText = songInfoText;
                 lastSentPlaybackBarText = playbackBarText;
             } else {

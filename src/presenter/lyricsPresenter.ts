@@ -101,7 +101,7 @@ class LyricsPresenter {
 
   get currentLineFormatted(): string {
     if (!this.hasWordTiming) {
-      return this.currentLine === '' ? `` : `[ ${this.currentLine} ]`;
+      return this.currentLine === '' ? `` : `[  ${this.currentLine}  ]`;
     }
 
     return this.renderWordByWordText();

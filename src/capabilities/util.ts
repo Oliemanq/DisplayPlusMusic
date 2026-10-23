@@ -20,3 +20,10 @@ export function escapeHtmlUI(value: string): string {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 }
+
+/**
+ * Removes HTML tags from a string.
+ */
+export function stripHtml(text: string): string {
+    return text.replace(/<[^>]*>/g, '');
+}

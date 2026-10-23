@@ -37,7 +37,7 @@ class LyricsPresenter {
   private noLyricsShownUntil: number | null = null;
 
   // Compensate for Bluetooth display latency
-  private readonly BLUETOOTH_DELAY = 0.1;
+  private readonly BLUETOOTH_DELAY = 0.05;
   // Show "No Lyrics Found" for this long before clearing it
   private readonly NO_LYRICS_DISPLAY_MS = 5000;
   // For enhanced (word-timed) lyrics only: if this many seconds pass between the last
@@ -101,26 +101,10 @@ class LyricsPresenter {
 
   get currentLineFormatted(): string {
     if (!this.hasWordTiming) {
-      return this.currentLine === '' ? `` : ` [   ${this.currentLine}   ]`;
+      return this.currentLine === '' ? `` : `[ ${this.currentLine} ]`;
     }
 
-    const words = this.currentLineWords;
-    const activeIndex = this.currentWordIndex;
-    let line = '  [   "';
-
-    for (let i = 0; i < words.length; i++) {
-      const word = words[i];
-      line += word.text;
-      if (i !== activeIndex) {
-        line += ' ';
-      } else if (word.text.endsWith("'") || word.text.endsWith('"')) {
-        line += ' " ';
-      } else {
-        line += '" ';
-      }
-    }
-
-    return line + '  ]';
+    return this.renderWordByWordText();
   }
 
   /** True when the current line has word/syllable-level timing available (e.g. .elrc). */
@@ -304,10 +288,12 @@ class LyricsPresenter {
         if (this.hasWordTiming) {
           el1.innerHTML = this.renderWordByWordHTML();
         } else {
-          el1.textContent = current;
+          el1.innerHTML = `<span class="lyric-line-active">${this.escapeHTML(current)}</span>`;
         }
       }
-      if (el2) el2.textContent = next;
+      if (el2) {
+        el2.innerHTML = `<span class="lyric-line-inactive">${this.escapeHTML(next)}</span>`;
+      }
       if (el3) el3.textContent = lyricsSourceText;
     } catch (_) { /* DOM may be unavailable in background */ }
   }
@@ -317,7 +303,7 @@ class LyricsPresenter {
    * via text formatting: already-spoken/upcoming words are dimmed, and the currently-spoken
    * word is emphasized (larger + full opacity).
    */
-  private renderWordByWordHTML(): string {
+  public renderWordByWordHTML(): string {
     return this.currentLineWords
       .map((word, i) => {
         const isActive = i === this.currentWordIndex;
@@ -326,6 +312,22 @@ class LyricsPresenter {
         return `<span class="${className}">${this.escapeHTML(word.text)}</span>`;
       })
       .join(' ');
+  }
+
+  private renderWordByWordText(): string {
+    let line = ' [ "';
+    for (let i = 0; i < this.currentLineWords.length; i++) {
+      const word = this.currentLineWords[i];
+      line += word.text;
+      if (i !== this.currentWordIndex) {
+        line += ' ';
+      } else if (word.text.endsWith("'") || word.text.endsWith('"')) {
+        line += ' " ';
+      } else {
+        line += '" ';
+      }
+    }
+    return line + ' ]';
   }
 
   private escapeHTML(text: string): string {

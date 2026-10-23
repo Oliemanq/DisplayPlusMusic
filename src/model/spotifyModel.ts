@@ -224,6 +224,7 @@ class SpotifyModel {
 
     async song_Pause() {
         try {
+            if (!spotifysdk || !this.deviceId) return;
             this.currentSong?.addisPlaying(false);
             await spotifysdk.player.pausePlayback(this.deviceId);
         } catch (e) { console.error('Pause failed:', e); }
@@ -231,6 +232,7 @@ class SpotifyModel {
 
     async song_Play() {
         try {
+            if (!spotifysdk || !this.deviceId) return;
             this.currentSong?.addisPlaying(true);
             await spotifysdk.player.startResumePlayback(this.deviceId);
         } catch (e) { console.error('Play failed:', e); }
@@ -238,12 +240,14 @@ class SpotifyModel {
 
     async song_Back() {
         try {
+            if (!spotifysdk || !this.deviceId) return;
             await spotifysdk.player.skipToPrevious(this.deviceId);
         } catch (e) { console.error('Back failed:', e); }
     }
 
     async song_Forward() {
         try {
+            if (!spotifysdk || !this.deviceId) return;
             await spotifysdk.player.skipToNext(this.deviceId);
         } catch (e) { console.error('Forward failed:', e); }
     }

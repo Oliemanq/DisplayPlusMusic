@@ -1,4 +1,4 @@
-import { initSpotify } from '../model/spotifyModel';
+import spotifyModel, { initSpotify } from '../model/spotifyModel';
 import navidromeModel from '../model/navidromeModel';
 import Song from '../model/songModel';
 import { storage } from '../utils/storage';

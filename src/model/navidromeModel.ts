@@ -73,9 +73,7 @@ class NavidromeModel {
   private lastSnapshotIsPlaying = false;
   private selectedClientName = '';
   private playbackClients: NavidromePlaybackClient[] = [];
-  private DRIFT_CORRECTION = 0.1;
-
-
+  private DRIFT_THRESHOLD = 0.1; // Seconds
 
   async init(): Promise<boolean> {
     this.baseUrl = normalizeBaseUrl((await storage.getItem('navidrome_base_url')) ?? '');
@@ -143,14 +141,15 @@ class NavidromeModel {
   async fetchCurrentTrack(): Promise<Song> {
     try {
       const entries = await this.getNowPlayingData();
+      
+      // Always update the client list
       this.playbackClients = entries.map(toClientSummary);
 
       if (entries.length === 0) {
         if (this.currentSong.songID !== '0') {
           this.currentSong.addisPlaying(false);
-          return this.currentSong;
         }
-        return song_placeholder;
+        return this.currentSong.songID === '0' ? song_placeholder : this.currentSong;
       }
 
       const selectedEntry = entries.find(entry => normalizeClientName(entry) === this.selectedClientName)
@@ -169,33 +168,40 @@ class NavidromeModel {
       song.addFeatures([]);
       song.addAlbum(selectedEntry.album ?? 'Unknown Album');
       song.addDurationSeconds(selectedEntry.duration ?? 0);
+      
       const now = performance.now();
       const playbackState = selectedEntry.state ?? 'playing';
       const isPlaying = playbackState !== 'paused' && playbackState !== 'stopped';
+      
       const sameTrack = song.songID === this.lastSnapshotSongID && this.lastSnapshotSongID !== '0';
       const serverProgress = (selectedEntry.positionMs ?? 0) / 1000;
+      
       let progressSeconds = serverProgress;
 
       const playbackStateChanged = isPlaying !== this.lastSnapshotIsPlaying;
 
-      if (!isPlaying) {
-        // When paused/stopped, the server position is stable and authoritative —
-        // always snap to it so we never drift ahead of the actual paused position.
-        progressSeconds = serverProgress;
-      } else if (sameTrack && this.lastSnapshotAt > 0 && !playbackStateChanged) {
-        // Continuously playing same track: interpolate locally between polls for
-        // smooth progress, then correct if we've drifted too far from the server.
-        const elapsedSeconds = Math.max(0, (now - this.lastSnapshotAt) / 1000);
+      if (sameTrack && this.lastSnapshotAt > 0 && !playbackStateChanged && isPlaying) {
+        // Same track, playing, and no state change: interpolate locally
+        const elapsedSeconds = (now - this.lastSnapshotAt) / 1000;
         const localProgress = this.lastSnapshotProgressSeconds + elapsedSeconds;
         const drift = Math.abs(serverProgress - localProgress);
-        if (drift > this.DRIFT_CORRECTION) {
-          console.log(`[Navidrome] Drift corrected: ${drift.toFixed(2)}s (local: ${localProgress.toFixed(2)}s, server: ${serverProgress.toFixed(2)}s)`);
-          progressSeconds = serverProgress;
+
+        if (drift > this.DRIFT_THRESHOLD) {
+          // Check for suspicious backward jump to near 0
+          if (serverProgress < localProgress - this.DRIFT_THRESHOLD && serverProgress < 2.0) {
+            console.log(`[Navidrome] Suspicious backward jump detected (local: ${localProgress.toFixed(2)}s, server: ${serverProgress.toFixed(2)}s). Ignoring server update.`);
+            progressSeconds = localProgress;
+          } else {
+            console.log(`[Navidrome] Significant drift detected. Correcting (local: ${localProgress.toFixed(2)}s, server: ${serverProgress.toFixed(2)}s)`);
+            progressSeconds = serverProgress;
+          }
         } else {
           progressSeconds = localProgress;
         }
+      } else {
+        // New track, paused, or state change: use serverProgress as authority
+        progressSeconds = serverProgress;
       }
-      // else: new track or state transition (pause→play) — use serverProgress directly
 
       if (song.durationSeconds > 0) {
         progressSeconds = Math.min(progressSeconds, song.durationSeconds);
@@ -209,7 +215,6 @@ class NavidromeModel {
 
       if (!sameTrack) {
         this.currentSong = song;
-        // New song — fetch art in the background, same as Spotify's pattern
         const coverArtId = selectedEntry.coverArt ?? selectedEntry.albumId ?? selectedEntry.id ?? '';
         if (coverArtId) {
           this.fetchArtAsync(coverArtId, this.currentSong).catch(console.error);
@@ -233,7 +238,9 @@ class NavidromeModel {
       return this.currentSong;
     } catch (error) {
       console.error('[Navidrome] fetchCurrentTrack failed:', error);
-      return song_placeholder;
+      // If error occurred, don't clear the current song if we already have one,
+      // but maybe reset playback state if it was a catastrophic error.
+      return this.currentSong.songID === '0' ? song_placeholder : this.currentSong;
     }
   }
 
@@ -259,9 +266,7 @@ class NavidromeModel {
 
   private async fetchArtAsync(coverArtId: string, song: Song): Promise<void> {
     try {
-      if (!coverArtId) {
-        return;
-      }
+      if (!coverArtId) return;
 
       const url = `${this.baseUrl}/rest/getCoverArt.view?${new URLSearchParams({
         id: coverArtId,

@@ -11,6 +11,8 @@ import {
     TextContainerUpgrade,
     ListContainerProperty,
     ListItemContainerProperty,
+    MenuContainerProperty,
+    MenuItemProperty,
 } from '@evenrealities/even_hub_sdk';
 
 import { formatTime } from '../Scripts/formatTime';
@@ -21,6 +23,12 @@ import spotifyPresenter from '../presenter/spotifyPresenter';
 const MAX_HEIGHT = 288;
 const MAX_WIDTH = 576;
 const IMAGE_RETRY_DELAY_MS = 3000;
+
+function truncateText(text: string, maxLength: number): string {
+    return text.length > maxLength
+        ? `${text.slice(0, maxLength - 1)}…`
+        : text;
+}
 
 let bridge: EvenAppBridge | null = null;
 let isPageCreated = false;
@@ -33,6 +41,7 @@ let imageRetryAt = 0;
 // bridge round-trips (a major source of glasses-side lyric latency) when nothing changed.
 let lastSentSongInfoText = '';
 let lastSentPlaybackBarText = '';
+let lastMiniMode = false;
 
 /** Resolves with fallback value if the promise times out or throws. */
 function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
@@ -42,10 +51,66 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
     ]);
 }
 
-/** Builds the container layout for the active source. Content fields are irrelevant for layout comparison. */
-function buildContainerConfig(songInfoText: string, playbackBarText: string, showPlaybackButtons: boolean) {
+/** Builds the container layout for mini mode. */
+function buildMiniModeConfig(songInfoText: string, lyricsText: string) {
     return {
-        containerTotalNum: showPlaybackButtons ? 4 : 3,
+        containerTotalNum: 3,
+        imageObject: [],
+        menuObject: new MenuContainerProperty({
+            menuItems: [
+                new MenuItemProperty({ itemName: 'Exit Mini mode', itemID: 2 }),
+            ],
+        }),
+        listObject: [],
+        textObject: [
+            new TextContainerProperty({
+                xPosition: 0,
+                yPosition: 0,
+                width: MAX_WIDTH,
+                height: 80,
+                borderRadius: 0,
+                borderWidth: 0,
+                paddingLength: 0,
+                containerID: 10,
+                textColor: 4,
+                zOrderIndex: 2,
+                containerName: 'songInfo',
+                content: songInfoText,
+                isEventCapture: 0,
+            }),
+            new TextContainerProperty({
+                xPosition: 0,
+                yPosition: 40,
+                width: MAX_WIDTH,
+                height: 80,
+                borderRadius: 0,
+                borderWidth: 0,
+                paddingLength: 0,
+                containerID: 11,
+                textColor: 4,
+                zOrderIndex: 1,
+                containerName: 'lyrics',
+                content: lyricsText,
+                isEventCapture: 1,
+            }),
+        ],
+    };
+}
+
+/** Builds the container layout for the active source. Content fields are irrelevant for layout comparison. */
+function buildContainerConfig(
+    songInfoText: string,
+    playbackBarText: string,
+    showPlaybackButtons: boolean,
+    isMiniMode: boolean,
+    song: Song,
+) {
+    if (isMiniMode) {
+        return buildMiniModeConfig(songInfoText, playbackBarText);
+    }
+
+    return {
+        containerTotalNum: showPlaybackButtons ? 5 : 4,
         imageObject: [
             new ImageContainerProperty({
                 xPosition: 2,
@@ -53,10 +118,14 @@ function buildContainerConfig(songInfoText: string, playbackBarText: string, sho
                 width: 144,
                 height: 144,
                 containerID: 0,
-                // zOrderIndex: 1,
                 containerName: 'album-art',
             }),
         ],
+        menuObject: new MenuContainerProperty({
+            menuItems: [
+                new MenuItemProperty({ itemName: 'Enter Mini mode', itemID: 1 }),
+            ],
+        }),
         listObject: showPlaybackButtons ? [
             new ListContainerProperty({
                 xPosition: 155,
@@ -67,7 +136,6 @@ function buildContainerConfig(songInfoText: string, playbackBarText: string, sho
                 borderRadius: 0,
                 containerID: 2,
                 containerName: 'buttons',
-                // zOrderIndex: 1,
                 isEventCapture: 1,
                 itemContainer: new ListItemContainerProperty({
                     itemCount: 3,
@@ -88,7 +156,7 @@ function buildContainerConfig(songInfoText: string, playbackBarText: string, sho
                 containerID: 3,
                 containerName: 'songInfo',
                 content: songInfoText,
-                // zOrderIndex: 1,
+                textColor: 4,
                 isEventCapture: 0,
             }),
             new TextContainerProperty({
@@ -101,7 +169,8 @@ function buildContainerConfig(songInfoText: string, playbackBarText: string, sho
                 containerID: 4,
                 containerName: 'playbackBar',
                 content: playbackBarText,
-                // zOrderIndex: 1,
+                textColor: 4,
+                // The list owns input capture when playback controls are shown.
                 isEventCapture: showPlaybackButtons ? 0 : 1,
             }),
         ],
@@ -109,8 +178,8 @@ function buildContainerConfig(songInfoText: string, playbackBarText: string, sho
 }
 
 /** Sends album art in the background — never blocks the text update path. */
-async function sendImageAsync(song: Song): Promise<void> {
-    if (isSendingImage || Date.now() < imageRetryAt) return;
+async function sendImageAsync(song: Song, isMiniMode: boolean): Promise<void> {
+    if (isMiniMode || isSendingImage || Date.now() < imageRetryAt) return;
     if (!song.albumArtRaw || song.albumArtRaw.length === 0 || song.songID === lastSongID) return;
 
     isSendingImage = true;
@@ -155,17 +224,29 @@ export async function createView(song: Song): Promise<void> {
             }
         }
 
-        const songInfoText = `${song.title}\n${song.artist}\n${song.album}`;
-        const playbackBarText = `${formatTime(song.progressSeconds)}               -${formatTime(Math.max(0, song.durationSeconds - song.progressSeconds))}\n` +`${song.createPlaybackBar(MAX_WIDTH)}\n` + `${lyricsPresenter.currentLineFormatted}\n` + `           ${lyricsPresenter.nextLine}`;
+        const isMiniMode = spotifyPresenter.isMiniMode;
+        const songInfoID = isMiniMode ? 10 : 3;
+        const lyricsID = isMiniMode ? 11 : 4;
+
+        const songInfoText = isMiniMode 
+            ? `${song.title} - ${song.artist}    ${song.isPlaying ? " " : "|| "}( ${formatTime(song.progressSeconds)} - ${formatTime(song.durationSeconds)} )`
+            : `${song.title}\n${song.artist}\n${song.album}`;
+        const playbackBarText = isMiniMode
+            ? `${lyricsPresenter.currentLineFormatted}\n      ${truncateText(lyricsPresenter.nextLine, lyricsPresenter.currentLineFormatted.length < 35 ? 35 : lyricsPresenter.currentLineFormatted.length)}`
+            : `${formatTime(song.progressSeconds)}               -${formatTime(Math.max(0, song.durationSeconds - song.progressSeconds))}\n` +
+              `${song.createPlaybackBar(MAX_WIDTH)}\n` +
+              ` ${lyricsPresenter.currentLineFormatted}\n` +
+              `         ${truncateText(lyricsPresenter.nextLine, lyricsPresenter.currentLineFormatted.length < 35 ? 35 : lyricsPresenter.currentLineFormatted.length)}`;
 
         const activeSource = spotifyPresenter.getActiveSource();
         const showPlaybackButtons = activeSource !== 'navidrome';
         // Only built when actually needed (create/rebuild paths) — constructing the full
         // container tree on every 10ms tick is pure overhead on the hot text-upgrade path.
-        const buildConfig = () => buildContainerConfig(songInfoText, playbackBarText, showPlaybackButtons);
+        const buildConfig = () => buildContainerConfig(songInfoText, playbackBarText, showPlaybackButtons, isMiniMode, song);
 
-        if (lastRenderedSource !== activeSource) {
+        if (lastRenderedSource !== activeSource || lastMiniMode !== isMiniMode) {
             lastRenderedSource = activeSource;
+            lastMiniMode = isMiniMode;
             if (isPageCreated) {
                 const rebuilt = await withTimeout(
                     bridge.rebuildPageContainer(new RebuildPageContainer(buildConfig())),
@@ -212,7 +293,7 @@ export async function createView(song: Song): Promise<void> {
         const songInfoChanged = songInfoText !== lastSentSongInfoText;
         const songInfoOk = !songInfoChanged || await withTimeout(
             bridge.textContainerUpgrade(new TextContainerUpgrade({
-                containerID: 3,
+                containerID: songInfoID,
                 containerName: 'songInfo',
                 content: songInfoText,
             })),
@@ -246,8 +327,8 @@ export async function createView(song: Song): Promise<void> {
         if (playbackBarText !== lastSentPlaybackBarText) {
             const ok2 = await withTimeout(
                 bridge.textContainerUpgrade(new TextContainerUpgrade({
-                    containerID: 4,
-                    containerName: 'playbackBar',
+                    containerID: lyricsID,
+                    containerName: isMiniMode ? 'lyrics' : 'playbackBar',
                     content: playbackBarText,
                 })),
                 2000,
@@ -258,7 +339,7 @@ export async function createView(song: Song): Promise<void> {
 
         // Kick off image send in background if needed
         if (song.albumArtRaw?.length > 0 && song.songID !== lastSongID) {
-            sendImageAsync(song);
+            sendImageAsync(song, isMiniMode);
         }
 
     } catch (e) {

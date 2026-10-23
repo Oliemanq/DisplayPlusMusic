@@ -1,6 +1,7 @@
 import Song from './songModel';
 import spotifyPresenter from '../presenter/spotifyPresenter';
 import { storage } from '../utils/storage';
+import { stripHtml } from '../capabilities/util';
 
 type NavidromeCue = {
     start?: number;
@@ -58,6 +59,13 @@ function formatLrcTimestamp(totalMilliseconds: number, brackets: '[]' | '<>'): s
     return brackets === '[]' ? `[${timestamp}]` : `<${timestamp}>`;
 }
 
+function removeWordTimingTags(syncedLyrics: string | null | undefined): string | null {
+    if (!syncedLyrics) return null;
+    // Spotify does not provide word-level timing. Keep line timestamps and text
+    // readable even when the fallback lyrics service returns enhanced LRC.
+    return syncedLyrics.replace(/<\d+:\d+(?:\.\d+)?\>/g, '');
+}
+
 /**
  * Builds a single LRC line, embedding per-word/syllable timing tags (the "enhanced" or
  * ".elrc" convention: `[00:12.00]<00:12.00>word <00:12.50>word2`) when cue-level timing
@@ -70,18 +78,19 @@ function formatLrcTimestamp(totalMilliseconds: number, brackets: '[]' | '<>'): s
  */
 function buildEnhancedLrcLine(start: number, value: string, cues: NavidromeCue[] | undefined, end?: number): string {
     const lineTag = formatLrcTimestamp(start, '[]');
+    const strippedValue = stripHtml(value);
     if (!cues || cues.length === 0) {
-        return `${lineTag}${value}`;
+        return `${lineTag}${strippedValue}`;
     }
 
     const wordTags = cues
         .filter(cue => typeof cue.start === 'number')
-        .map(cue => `${formatLrcTimestamp(cue.start!, '<>')}${cue.value ?? ''}`)
+        .map(cue => `${formatLrcTimestamp(cue.start!, '<>')}${stripHtml(cue.value ?? '')}`)
         .join('');
 
     const endTag = typeof end === 'number' ? formatLrcTimestamp(end, '<>') : '';
 
-    return `${lineTag}${wordTags || value}${endTag}`;
+    return `${lineTag}${wordTags || strippedValue}${endTag}`;
 }
 
 function lyricsFromStructuredLyricsList(lyricsList: NavidromeLyricsList | undefined) {
@@ -208,7 +217,7 @@ async function fetchLyrics(song: Song | any) {
 
         return {
             plainLyrics: data.plainLyrics,
-            syncedLyrics: data.syncedLyrics,
+            syncedLyrics: removeWordTimingTags(data.syncedLyrics),
             source: 'web' as const,
         };
     } catch (e) {

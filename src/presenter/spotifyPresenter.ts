@@ -9,6 +9,9 @@ class SpotifyPresenter {
     currentSong: Song = song_placeholder;
     nextSong?: Song;
     private activeSource: MusicSource = 'spotify';
+    private controlQueue: Promise<void> = Promise.resolve();
+    isMiniMode = false;
+    onModeChanged?: () => void;
 
     async pollSingle() {
         try {
@@ -23,6 +26,11 @@ class SpotifyPresenter {
         } catch (e) {
             console.error('[SpotifyPresenter] pollSingle error:', e);
         }
+    }
+
+    toggleMiniMode() {
+        this.isMiniMode = !this.isMiniMode;
+        if (this.onModeChanged) this.onModeChanged();
     }
 
     async fetchCurrentSong(): Promise<Song> {
@@ -56,27 +64,37 @@ class SpotifyPresenter {
         initSpotify();
     }
 
-    song_pauseplay() {
-        if (this.activeSource === 'navidrome') {
-            navidromeModel.song_Pause();
-            return;
-        }
+    private queueControl(action: () => Promise<void>): void {
+        this.controlQueue = this.controlQueue
+            .then(action)
+            .catch(error => console.error('[SpotifyPresenter] playback control error:', error));
+    }
 
-        this.currentSong?.isPlaying ? spotifyModel.song_Pause() : spotifyModel.song_Play();
+    song_pauseplay(): void {
+        this.queueControl(async () => {
+            if (this.activeSource === 'navidrome') {
+                await navidromeModel.song_Pause();
+                return;
+            }
+
+            if (this.currentSong?.isPlaying) {
+                await spotifyModel.song_Pause();
+            } else {
+                await spotifyModel.song_Play();
+            }
+        });
     }
-    song_back() {
-        if (this.activeSource === 'navidrome') {
-            navidromeModel.song_Back();
-            return;
-        }
-        spotifyModel.song_Back();
+
+    song_back(): void {
+        this.queueControl(() => this.activeSource === 'navidrome'
+            ? navidromeModel.song_Back()
+            : spotifyModel.song_Back());
     }
-    song_forward() {
-        if (this.activeSource === 'navidrome') {
-            navidromeModel.song_Forward();
-            return;
-        }
-        spotifyModel.song_Forward();
+
+    song_forward(): void {
+        this.queueControl(() => this.activeSource === 'navidrome'
+            ? navidromeModel.song_Forward()
+            : spotifyModel.song_Forward());
     }
 
     async setNavidromeClient(clientName: string) {

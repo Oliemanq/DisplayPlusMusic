@@ -1,6 +1,7 @@
 import Song from './songModel';
 import spotifyPresenter from '../presenter/spotifyPresenter';
 import { storage } from '../utils/storage';
+import { stripHtml } from '../capabilities/util';
 
 type NavidromeCue = {
     start?: number;
@@ -58,6 +59,13 @@ function formatLrcTimestamp(totalMilliseconds: number, brackets: '[]' | '<>'): s
     return brackets === '[]' ? `[${timestamp}]` : `<${timestamp}>`;
 }
 
+function removeWordTimingTags(syncedLyrics: string | null | undefined): string | null {
+    if (!syncedLyrics) return null;
+    // Spotify does not provide word-level timing. Keep line timestamps and text
+    // readable even when the fallback lyrics service returns enhanced LRC.
+    return syncedLyrics.replace(/<\d+:\d+(?:\.\d+)?\>/g, '');
+}
+
 /**
  * Builds a single LRC line, embedding per-word/syllable timing tags (the "enhanced" or
  * ".elrc" convention: `[00:12.00]<00:12.00>word <00:12.50>word2`) when cue-level timing
@@ -70,18 +78,19 @@ function formatLrcTimestamp(totalMilliseconds: number, brackets: '[]' | '<>'): s
  */
 function buildEnhancedLrcLine(start: number, value: string, cues: NavidromeCue[] | undefined, end?: number): string {
     const lineTag = formatLrcTimestamp(start, '[]');
+    const strippedValue = stripHtml(value);
     if (!cues || cues.length === 0) {
-        return `${lineTag}${value}`;
+        return `${lineTag}${strippedValue}`;
     }
 
     const wordTags = cues
         .filter(cue => typeof cue.start === 'number')
-        .map(cue => `${formatLrcTimestamp(cue.start!, '<>')}${cue.value ?? ''}`)
+        .map(cue => `${formatLrcTimestamp(cue.start!, '<>')}${stripHtml(cue.value ?? '')}`)
         .join('');
 
     const endTag = typeof end === 'number' ? formatLrcTimestamp(end, '<>') : '';
 
-    return `${lineTag}${wordTags || value}${endTag}`;
+    return `${lineTag}${wordTags || strippedValue}${endTag}`;
 }
 
 function lyricsFromStructuredLyricsList(lyricsList: NavidromeLyricsList | undefined) {
@@ -120,8 +129,9 @@ function lyricsFromStructuredLyricsList(lyricsList: NavidromeLyricsList | undefi
     };
 }
 
-async function fetchLyricsFromNavidrome(song: Song) {
-    if (spotifyPresenter.getActiveSource() !== 'navidrome' || song.songID === '0') {
+async function fetchLyricsFromNavidrome(song: Song | any) {
+    const songID = song.songID || song.id;
+    if (spotifyPresenter.getActiveSource() !== 'navidrome' || songID === '0') {
         return { plainLyrics: null, syncedLyrics: null, source: '' as const };
     }
 
@@ -135,7 +145,7 @@ async function fetchLyricsFromNavidrome(song: Song) {
 
     const url = new URL(`${baseUrl.replace(/\/+$/, '')}/rest/getLyricsBySongId.view`);
     url.search = buildNavidromeAuthParams(username, password).toString();
-    url.searchParams.set('id', song.songID);
+    url.searchParams.set('id', songID);
     // Request word/syllable-level cue timing (OpenSubsonic songLyrics v2) when the server supports it.
     // Servers that don't understand this parameter simply ignore it and return v1 line-level data.
     url.searchParams.set('enhanced', 'true');
@@ -150,12 +160,15 @@ async function fetchLyricsFromNavidrome(song: Song) {
     return { ...lyrics, source: 'local server' as const };
 }
 
-async function fetchLyrics(song: Song) {
+async function fetchLyrics(song: Song | any) {
     const title = song.title.trim().toLowerCase();
     const artist = song.artist.trim().toLowerCase();
+    const songID = song.songID || song.id;
+    const album = song.album || "";
+    const durationSeconds = song.durationSeconds || 0;
 
     if (
-        song.songID === '0' ||
+        songID === '0' ||
         title === '' ||
         title === 'no song found' ||
         artist.includes('please log in via')
@@ -180,11 +193,11 @@ async function fetchLyrics(song: Song) {
     const url = new URL("https://lrclib.net/api/get");
     url.searchParams.append("track_name", song.title);
     url.searchParams.append("artist_name", song.artist);
-    if (song.album && song.album !== "None") {
-        url.searchParams.append("album_name", song.album);
+    if (album && album !== "None") {
+        url.searchParams.append("album_name", album);
     }
-    if (song.durationSeconds > 0) {
-        url.searchParams.append("duration", Math.round(song.durationSeconds).toString());
+    if (durationSeconds > 0) {
+        url.searchParams.append("duration", Math.round(durationSeconds).toString());
     }
 
     try {
@@ -204,7 +217,7 @@ async function fetchLyrics(song: Song) {
 
         return {
             plainLyrics: data.plainLyrics,
-            syncedLyrics: data.syncedLyrics,
+            syncedLyrics: removeWordTimingTags(data.syncedLyrics),
             source: 'web' as const,
         };
     } catch (e) {

@@ -111,19 +111,14 @@
         <details class="popup-label">
             <summary class="dropdown-label">
                 <h5 style="text-align: left; margin: 0; margin-left: 35px;">Instructions</h5>
-                <p style="font-size: 24px; margin: 0; margin-top: 4px; text-align: left; margin-left: 40px;">Tap
-                    to view
-                    setup
-                    instructions</p>
+                <p style="font-size: 24px; margin: 0; margin-top: 4px; text-align: left; margin-left: 40px;">Tap to view setup instructions</p>
             </summary>
             <div class="dropdown-container">
                 <div id="spotify-auth-copy" style="display: flex; flex-direction: column; gap: 12px;">
                     <h4>Spotify Premium is required for this app due to spotify restrictions</h4>
                     <p> To get started, head to </p>
                     <p class="popup-link">https://developer.spotify.com/dashboard/</p>
-                    <p>in a browser and sign in. From there, create an app and add a name and description of
-                        your
-                        choice.
+                    <p>in a browser and sign in. From there, create an app and add a name and description of your choice.
                         <br>Then add <br>
                     </p>
                     <p class="popup-link">https://oliemanq.github.io/DisplayPlusMusic/</p>
@@ -132,10 +127,14 @@
                 </div>
                 <div id="navidrome-auth-copy" style="display: none; flex-direction: column; gap: 12px;">
                     <h4>Navidrome / Subsonic setup</h4>
-                    <p>Enter the base URL of your Navidrome server and the account used by the phone app that
-                        reports
-                        playback.</p>
-                    <p>Example: https://music.example.com</p>
+                    <h5 style="margin: 0;">Requires Navidrome 0.62.0+ or a Subsonic server with the PlaybackReport extension</h5>
+                    <h5 style="margin: 0;">Also requires a client that supports said extension. These include: </h5>
+                    <ul style="text-align: center; list-style-position: inside; padding-left: 0;">
+                        <li>Feishin on Windows/Mac/Linux</li>
+                        <li>Arpeggi on iOS</li>
+                        <li>Symphonium on Android</li>
+                    </ul>
+                    <p>Enter the URL for your server as you use it on your phone, and sign in with the same account.</p>
                 </div>
             </div>
         </details>
@@ -256,7 +255,7 @@
             padding: 0 72px 0 28px;
             box-sizing: border-box;
             border-radius: 18px;
-            background: var(--surface-strong);
+            background: var(--button-background-light);
             border: 1px solid var(--field-border);
             color: var(--text-dark);
             font-size: 32px;
@@ -533,6 +532,14 @@
             opacity: 1;
             font-size: calc(1em + 2px);
             font-weight: 700;
+        }
+
+        .lyric-line-active {
+            opacity: 1;
+        }
+
+        .lyric-line-inactive {
+            opacity: 0.5;
         }
 
         .subcontainer {

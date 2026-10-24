@@ -23,7 +23,7 @@
     "sim": "vite && evenhub-simulator http://localhost:5173"
   },
   "dependencies": {
-    "@evenrealities/even_hub_sdk": "^0.0.9",
+    "@evenrealities/even_hub_sdk": "^0.0.16",
     "@spotify/web-api-ts-sdk": "^1.2.0",
     "fs": "^0.0.1-security",
     "playwright": "^1.58.2",

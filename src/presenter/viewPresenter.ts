@@ -25,6 +25,8 @@ class ViewPresenter {
         const sourceSelect = document.getElementById('music-source') as HTMLSelectElement | null;
         const spotifyFields = document.getElementById('spotify-auth-fields');
         const navidromeFields = document.getElementById('navidrome-auth-fields');
+        const spotifyInstructions = document.getElementById('spotify-auth-copy');
+        const navidromeInstructions = document.getElementById('navidrome-auth-copy');
         const clientList = document.getElementById('navidrome-client-list');
         const miniButtons = document.getElementById('mini-buttons-container');
 
@@ -32,6 +34,8 @@ class ViewPresenter {
             const source = sourceSelect?.value || 'spotify';
             if (spotifyFields) spotifyFields.style.display = source === 'spotify' ? 'flex' : 'none';
             if (navidromeFields) navidromeFields.style.display = source === 'navidrome' ? 'flex' : 'none';
+            if (spotifyInstructions) spotifyInstructions.style.display = source === 'spotify' ? 'flex' : 'none';
+            if (navidromeInstructions) navidromeInstructions.style.display = source === 'navidrome' ? 'flex' : 'none';
             const clientPicker = document.getElementById('navidrome-client-picker');
             if (clientPicker) clientPicker.style.display = source === 'navidrome' ? 'flex' : 'none';
             if (miniButtons) miniButtons.style.display = source === 'navidrome' ? 'none' : 'flex';

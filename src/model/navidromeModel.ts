@@ -187,14 +187,8 @@ class NavidromeModel {
         const drift = Math.abs(serverProgress - localProgress);
 
         if (drift > this.DRIFT_THRESHOLD) {
-          // Check for suspicious backward jump to near 0
-          if (serverProgress < localProgress - this.DRIFT_THRESHOLD && serverProgress < 2.0) {
-            console.log(`[Navidrome] Suspicious backward jump detected (local: ${localProgress.toFixed(2)}s, server: ${serverProgress.toFixed(2)}s). Ignoring server update.`);
-            progressSeconds = localProgress;
-          } else {
-            console.log(`[Navidrome] Significant drift detected. Correcting (local: ${localProgress.toFixed(2)}s, server: ${serverProgress.toFixed(2)}s)`);
-            progressSeconds = serverProgress;
-          }
+          console.log(`[Navidrome] Significant drift detected. Correcting (local: ${localProgress.toFixed(2)}s, server: ${serverProgress.toFixed(2)}s)`);
+          progressSeconds = serverProgress;
         } else {
           progressSeconds = localProgress;
         }

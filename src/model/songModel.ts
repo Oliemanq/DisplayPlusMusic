@@ -99,13 +99,17 @@ class Song {
         let barWidth = maxWidth / maxVerticalBar;
         let bracketsWidth = maxWidth / maxBrackets;
 
-        let maxWidthTrue = maxWidth - (bracketsWidth * 2) - (this.isPlaying ? 0 : barWidth * 3);
+        // Account for the pause symbol "|| " if not playing.
+        // "|| " is 3 characters. We use a larger buffer to ensure no overflow.
+        let pauseBuffer = this.isPlaying ? 0 : (barWidth * 8);
+        let maxWidthTrue = maxWidth - (bracketsWidth * 2) - pauseBuffer;
 
         let maxDashCount = Math.floor(progressPercent * maxDashes);
         let maxUnderscoreCount = Math.floor((1 - progressPercent) * maxUnderscores);
 
         let dashCount = Math.floor(maxDashCount * (maxWidthTrue / maxWidth));
         let underscoreCount = Math.floor(maxUnderscoreCount * (maxWidthTrue / maxWidth));
+        
         while ((dashCount * dashWidth) + (underscoreCount * underscoreWidth) > maxWidthTrue && dashCount > 0) {
             dashCount -= 1;
         }

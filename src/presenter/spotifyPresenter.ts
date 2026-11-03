@@ -28,8 +28,9 @@ class SpotifyPresenter {
         }
     }
 
-    toggleMiniMode() {
+    async toggleMiniMode() {
         this.isMiniMode = !this.isMiniMode;
+        await storage.setItem('mini_mode', String(this.isMiniMode));
         if (this.onModeChanged) this.onModeChanged();
     }
 
@@ -46,6 +47,9 @@ class SpotifyPresenter {
     async initActiveSource(): Promise<void> {
         const storedSource = (await storage.getItem('music_source')) as MusicSource | null;
         this.activeSource = storedSource ?? 'spotify';
+
+        const storedMiniMode = await storage.getItem('mini_mode');
+        this.isMiniMode = storedMiniMode === 'true';
 
         if (this.activeSource === 'navidrome') {
             const configured = await navidromeModel.init();

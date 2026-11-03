@@ -3,6 +3,7 @@ import { SongInfo } from '../state/appState';
 import { escapeHtmlLyric, escapeHtmlUI } from './util';
 import { formatTime } from '../Scripts/formatTime';
 import { system } from '../capabilities/system';
+import { getTextWidth } from '@evenrealities/pretext';
 import { 
     EvenAppBridge, 
     CreateStartUpPageContainer, 
@@ -73,43 +74,25 @@ export const UI = {
     isPlaying: boolean,
     maxWidth: number
   ): string {
-    let value = progressSeconds;
-    let max = durationSeconds;
+    const progressPercent = durationSeconds > 0 ? Math.max(0, Math.min(1, progressSeconds / durationSeconds)) : 0;
+    const prefix = isPlaying ? "" : "|| ";
 
-    let progressPercent = 0;
-    if (max > 0) {
-      progressPercent = value / max;
-      if (isNaN(progressPercent) || !isFinite(progressPercent)) {
-        progressPercent = 0;
+    let totalChars = 121;
+    let bar = prefix + "[|]";
+
+    while (totalChars >= 0) {
+      const dashCount = Math.floor(progressPercent * totalChars);
+      const underscoreCount = totalChars - dashCount;
+      const currentBar = prefix + "[" + "-".repeat(dashCount) + "|" + "_".repeat(underscoreCount) + "]";
+
+      if (getTextWidth(currentBar) <= maxWidth) {
+        bar = currentBar;
+        break;
       }
-      progressPercent = Math.max(0, Math.min(1, progressPercent));
+      totalChars--;
     }
 
-    const maxUnderscores = 64;
-    const maxDashes = 57;
-    const maxVerticalBar = 144;
-    const maxBrackets = 82;
-
-    const underscoreWidth = maxWidth / maxUnderscores;
-    const dashWidth = maxWidth / maxDashes;
-    const barWidth = maxWidth / maxVerticalBar;
-    const bracketsWidth = maxWidth / maxBrackets;
-
-    let maxWidthTrue = maxWidth - (bracketsWidth * 2) - (isPlaying ? 0 : barWidth * 3);
-
-    let maxDashCount = Math.floor(progressPercent * maxDashes);
-    let maxUnderscoreCount = Math.floor((1 - progressPercent) * maxUnderscores);
-
-    let dashCount = Math.floor(maxDashCount * (maxWidthTrue / maxWidth));
-    let underscoreCount = Math.floor(maxUnderscoreCount * (maxWidthTrue / maxWidth));
-    while ((dashCount * dashWidth) + (underscoreCount * underscoreWidth) > maxWidthTrue && dashCount > 0) {
-      dashCount -= 1;
-    }
-
-    dashCount = Math.max(0, dashCount);
-    underscoreCount = Math.max(0, underscoreCount);
-
-    return (isPlaying ? "" : "|| ") + "[" + "-".repeat(dashCount) + "|" + "_".repeat(underscoreCount) + "]";
+    return bar;
   }
 };
 

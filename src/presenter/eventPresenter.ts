@@ -50,9 +50,9 @@ export async function eventHandler() {
         if (menuItemClickEvent && menuItemClickEvent.itemID) { // Tapping on menu item
             console.log('Menu item clicked:', menuItemClickEvent.itemID);
             if (menuItemClickEvent.itemID === 1) {
-                spotifyPresenter.toggleMiniMode();
+                await spotifyPresenter.toggleMiniMode();
             } else if (menuItemClickEvent.itemID === 2) {
-                spotifyPresenter.toggleMiniMode();
+                await spotifyPresenter.toggleMiniMode();
             }
         }
 

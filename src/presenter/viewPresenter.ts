@@ -230,6 +230,7 @@ class ViewPresenter {
         await storage.removeItem('navidrome_password');
         await storage.removeItem('navidrome_selected_client');
         await storage.removeItem('music_source');
+        await storage.removeItem('mini_mode');
         console.log("Spotify session cleared!");
         window.location.reload();
     }
@@ -254,8 +255,8 @@ class ViewPresenter {
                     const blob = new Blob([song.albumArtColor] as BlobPart[], { type: 'image/png' });
                     this.lastBlobUrl = URL.createObjectURL(blob);
                     imgElement.src = this.lastBlobUrl;
+                    this.lastSongID = song.songID;
                 }
-                this.lastSongID = song.songID;
             }
         } catch (e) {
             console.error("[viewPresenter] updateHTML threw:", e);

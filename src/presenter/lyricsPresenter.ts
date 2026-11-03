@@ -1,11 +1,13 @@
 import { fetchLyrics } from '../model/lyricsModel';
 import Song from '../model/songModel';
 import spotifyPresenter from './spotifyPresenter';
+import { getTextWidth } from '@evenrealities/pretext';
 
 export interface LyricWord {
     time: number;
     text: string;
 }
+// ... (rest of the file)
 
 export interface LyricLine {
     time: number;
@@ -133,7 +135,7 @@ class LyricsPresenter {
 
       this.noLyricsShownUntil = null;
 
-      const parsedLines = this.parseLines(this.syncedLyrics);
+      const parsedLines = this.parseLines(this.syncedLyrics, spotifyPresenter.currentSong.durationSeconds);
       const progress = spotifyPresenter.currentSong.progressSeconds + this.BLUETOOTH_DELAY;
       this.currentIndex = this.getActiveIndex(parsedLines, progress);
 
@@ -158,7 +160,7 @@ class LyricsPresenter {
     }
   }
 
-  private parseLines(raw: string): LyricLine[] {
+  private parseLines(raw: string, songDuration?: number): LyricLine[] {
       const result: LyricLine[] = [];
       for (const line of raw.split('\n')) {
           const match = line.match(/^\s*\[(\d+):(\d+(?:\.\d+)?)\](.*)/);
@@ -175,7 +177,7 @@ class LyricsPresenter {
       if (result.length > 0 && result[0].time > 5) {
           result.unshift({ time: 0, text: '~ ♪♪♪ ~' });
       }
-      return this.insertEnhancedGapFillers(result);
+      return this.insertEnhancedGapFillers(result, songDuration);
   }
 
   /**
@@ -184,18 +186,23 @@ class LyricsPresenter {
    * last word and the start of the following line. Lines without word timing (plain synced
    * lyrics) are left completely untouched.
    */
-  private insertEnhancedGapFillers(lines: LyricLine[]): LyricLine[] {
+  private insertEnhancedGapFillers(lines: LyricLine[], songDuration?: number): LyricLine[] {
       const result: LyricLine[] = [];
       for (let i = 0; i < lines.length; i++) {
           const line = lines[i];
           result.push(line);
 
           const nextLine = lines[i + 1];
-          if (!nextLine || typeof line.wordsEndTime !== 'number') continue;
-
-          const gap = nextLine.time - line.wordsEndTime;
-          if (gap > this.ENHANCED_GAP_THRESHOLD_SECONDS) {
-              result.push({ time: line.wordsEndTime, text: '~ ♪♪♪ ~' });
+          if (nextLine && typeof line.wordsEndTime === "number") {
+              const gap = nextLine.time - line.wordsEndTime;
+              if (gap > this.ENHANCED_GAP_THRESHOLD_SECONDS) {
+                  result.push({ time: line.wordsEndTime, text: "~ ♪♪♪ ~" });
+              }
+          } else if (songDuration !== undefined && i === lines.length - 1 && typeof line.wordsEndTime === "number") {
+              const gap = songDuration - line.wordsEndTime;
+              if (gap > this.ENHANCED_GAP_THRESHOLD_SECONDS) {
+                  result.push({ time: line.wordsEndTime, text: "~ ♪♪♪ ~" });
+              }
           }
       }
       return result;
@@ -236,7 +243,7 @@ class LyricsPresenter {
       return {
           text: words.map(w => w.text).join(' '),
           words,
-          endTime,
+          endTime: endTime ?? (words.length > 0 ? words[words.length - 1].time : undefined),
       };
   }
 
@@ -314,20 +321,80 @@ class LyricsPresenter {
       .join(' ');
   }
 
-  private renderWordByWordText(): string {
-    let line = ' [ "';
-    for (let i = 0; i < this.currentLineWords.length; i++) {
-      const word = this.currentLineWords[i];
-      line += word.text;
-      if (i !== this.currentWordIndex) {
-        line += ' ';
-      } else if (word.text.endsWith("'") || word.text.endsWith('"')) {
-        line += ' " ';
-      } else {
-        line += '" ';
+  /**
+   * Renders the current line using a rolling window of words for word-by-word lyrics.
+   * This creates an "overlapping" effect as words rotate into and out of view.
+   * If the full line doesn't fit, it shows a window of words with '...' to indicate truncation.
+   */
+  public renderWordByWordText(targetWidth: number = 10000): string {
+    const words = this.currentLineWords;
+    const idx = this.currentWordIndex;
+    if (words.length === 0) return ' [  ]';
+
+    const getLineText = (start: number, end: number, showEllipsis: boolean) => {
+      let line = ' [ "';
+      if (showEllipsis && start > 0) {
+        line += '... ';
+      }
+      for (let i = start; i <= end; i++) {
+        const word = words[i];
+        line += word.text;
+        if (i !== idx) {
+          line += ' ';
+        } else if (word.text.endsWith("'") || word.text.endsWith('"')) {
+          line += ' " ';
+        } else {
+          line += '" ';
+        }
+      }
+      if (showEllipsis && end < words.length - 1) {
+        line += ' ...';
+      }
+      return line + ' ]';
+    };
+
+    // 1. Check if the full line fits
+    const fullLineText = getLineText(0, words.length - 1, false);
+    if (getTextWidth(fullLineText) <= targetWidth) {
+      return fullLineText;
+    }
+
+    // 2. If not, find the largest window around idx that fits (including ellipsis)
+    let start = idx === -1 ? 0 : idx;
+    let end = idx === -1 ? 0 : idx;
+
+    if (idx === -1) {
+      // If we are before the first word, show the first few words that fit
+      end = 0;
+      while (end + 1 < words.length && getTextWidth(getLineText(0, end + 1, true)) <= targetWidth) {
+        end++;
+      }
+      start = 0;
+    } else {
+      // Greedy expansion
+      while (true) {
+        let expanded = false;
+        // Try expand left
+        if (start > 0) {
+          const nextStart = start - 1;
+          if (getTextWidth(getLineText(nextStart, end, true)) <= targetWidth) {
+            start = nextStart;
+            expanded = true;
+          }
+        }
+        // Try expand right
+        if (end < words.length - 1) {
+          const nextEnd = end + 1;
+          if (getTextWidth(getLineText(start, nextEnd, true)) <= targetWidth) {
+            end = nextEnd;
+            expanded = true;
+          }
+        }
+        if (!expanded) break;
       }
     }
-    return line + ' ]';
+
+    return getLineText(start, end, true);
   }
 
   private escapeHTML(text: string): string {

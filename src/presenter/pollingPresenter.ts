@@ -4,7 +4,7 @@ import { createView } from '../view/GlassesView';
 import viewPresenter from './viewPresenter';
 
 class PollingPresenter {
-    private readonly API_INTERVAL_MS = 1000; // 1000ms = 1 sec
+    private readonly API_INTERVAL_MS = 500; // 500ms = 0.5 sec
     private readonly QUICK_INTERVAL_MS = 10;
 
     private isPolling = false;

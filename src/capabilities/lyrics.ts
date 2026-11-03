@@ -7,7 +7,7 @@ export const Lyrics = {
   /**
    * Parses raw LRC content into structured lines and words.
    */
-  parseLines(raw: string): LyricLine[] {
+  parseLines(raw: string, songDuration?: number): LyricLine[] {
     const result: LyricLine[] = [];
     for (const line of raw.split('\n')) {
       const match = line.match(/^\s*\[(\d+):(\d+(?:\.\d+)?)\](.*)/);
@@ -24,24 +24,29 @@ export const Lyrics = {
     if (result.length > 0 && result[0].time > 5) {
       result.unshift({ time: 0, text: '~ ♪♪♪ ~' });
     }
-    return this.insertEnhancedGapFillers(result);
+    return this.insertEnhancedGapFillers(result, songDuration);
   },
 
   /**
    * Inserts blank/music-note filler lines for enhanced lyrics with large gaps.
    */
-  insertEnhancedGapFillers(lines: LyricLine[], gapThreshold: number = 3): LyricLine[] {
+  insertEnhancedGapFillers(lines: LyricLine[], gapThreshold: number = 3, songDuration?: number): LyricLine[] {
     const result: LyricLine[] = [];
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       result.push(line);
 
       const nextLine = lines[i + 1];
-      if (!nextLine || typeof line.wordsEndTime !== 'number') continue;
-
-      const gap = nextLine.time - line.wordsEndTime;
-      if (gap > gapThreshold) {
-        result.push({ time: line.wordsEndTime, text: '~ ♪♪♪ ~' });
+      if (nextLine && typeof line.wordsEndTime === "number") {
+        const gap = nextLine.time - line.wordsEndTime;
+        if (gap > gapThreshold) {
+          result.push({ time: line.wordsEndTime, text: "~ ♪♪♪ ~" });
+        }
+      } else if (songDuration !== undefined && i === lines.length - 1 && typeof line.wordsEndTime === "number") {
+        const gap = songDuration - line.wordsEndTime;
+        if (gap > gapThreshold) {
+          result.push({ time: line.wordsEndTime, text: "~ ♪♪♪ ~" });
+        }
       }
     }
     return result;
@@ -79,7 +84,7 @@ export const Lyrics = {
     return {
       text: words.map(w => w.text).join(' '),
       words,
-      endTime,
+      endTime: endTime ?? (words.length > 0 ? words[words.length - 1].time : undefined),
     };
   },
 

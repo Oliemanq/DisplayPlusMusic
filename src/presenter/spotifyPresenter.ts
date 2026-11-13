@@ -74,10 +74,19 @@ class SpotifyPresenter {
             .catch(error => console.error('[SpotifyPresenter] playback control error:', error));
     }
 
+    /** True when the CURRENTLY SELECTED player can be driven — per player, not per source. */
+    supportsPlaybackControl(): boolean {
+        return this.activeSource === 'navidrome' ? navidromeModel.supportsControl() : true;
+    }
+
     song_pauseplay(): void {
         this.queueControl(async () => {
             if (this.activeSource === 'navidrome') {
-                await navidromeModel.song_Pause();
+                if (this.currentSong?.isPlaying) {
+                    await navidromeModel.song_Pause();
+                } else {
+                    await navidromeModel.song_Play();
+                }
                 return;
             }
 

@@ -19,7 +19,6 @@ import { formatTime } from '../Scripts/formatTime';
 import Song from '../model/songModel';
 import lyricsPresenter from '../presenter/lyricsPresenter';
 import spotifyPresenter from '../presenter/spotifyPresenter';
-import type { MusicSource } from '../model/musicSource';
 import { getTextWidth, pxTruncate } from '@evenrealities/pretext';
 
 const MAX_HEIGHT = 288;
@@ -158,14 +157,12 @@ function buildMiniModeConfig(songInfoText: string, lyricsText: string) {
 function buildContainerConfig(
     songInfoText: string,
     playbackBarText: string,
-    source: MusicSource,
+    showPlaybackButtons: boolean,
     isMiniMode: boolean,
 ) {
     if (isMiniMode) {
         return buildMiniModeConfig(songInfoText, playbackBarText);
     }
-
-    const showPlaybackButtons = source === 'spotify';
 
     return {
         containerTotalNum: showPlaybackButtons ? 4 : 3,
@@ -284,7 +281,10 @@ export async function createView(song: Song): Promise<void> {
 
         const activeSource = spotifyPresenter.getActiveSource();
         const isMiniMode = spotifyPresenter.isMiniMode;
-        const showPlaybackButtons = activeSource === 'spotify';
+        const showPlaybackButtons = spotifyPresenter.supportsPlaybackControl();
+        // Button visibility is per player, so it is part of the layout key: switching between
+        // a controllable and a non-controllable player must rebuild the page.
+        const layoutKey = showPlaybackButtons && !isMiniMode ? `${activeSource}:buttons` : activeSource;
         const songInfoID = isMiniMode ? 10 : 3;
         const lyricsID = isMiniMode ? 11 : 4;
         const phase_timing = 25000; // 25 seconds for a full marquee cycle
@@ -347,9 +347,9 @@ export async function createView(song: Song): Promise<void> {
                   `         ${truncateText(lyricsPresenter.nextLine, currentLineText.length < 35 ? 35 : currentLineText.length)}`;
               })();
 
-        const buildConfig = () => buildContainerConfig(songInfoText, playbackBarText, activeSource, isMiniMode);
+        const buildConfig = () => buildContainerConfig(songInfoText, playbackBarText, showPlaybackButtons, isMiniMode);
 
-        if (lastRenderedSource !== activeSource || lastMiniMode !== isMiniMode) {
+        if (lastRenderedSource !== layoutKey || lastMiniMode !== isMiniMode) {
             if (isPageCreated) {
                 const rebuilt = await withTimeout(
                     bridge.rebuildPageContainer(new RebuildPageContainer(buildConfig())),
@@ -361,7 +361,7 @@ export async function createView(song: Song): Promise<void> {
                     return;
                 }
 
-                lastRenderedSource = activeSource;
+                lastRenderedSource = layoutKey;
                 lastMiniMode = isMiniMode;
                 await new Promise(r => setTimeout(r, 300));
                 lastSongID = '';
@@ -383,7 +383,7 @@ export async function createView(song: Song): Promise<void> {
 
             if (result === StartUpPageCreateResult.success) {
                 isPageCreated = true;
-                lastRenderedSource = activeSource;
+                lastRenderedSource = layoutKey;
                 lastMiniMode = isMiniMode;
                 // The initial config already carries this content, so treat it as sent —
                 // avoids one redundant textContainerUpgrade call on the very next tick.
@@ -404,7 +404,7 @@ export async function createView(song: Song): Promise<void> {
                 }
 
                 isPageCreated = true;
-                lastRenderedSource = activeSource;
+                lastRenderedSource = layoutKey;
                 lastMiniMode = isMiniMode;
                 lastSongID = '';
                 imageRetryAt = 0;

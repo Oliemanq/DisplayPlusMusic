@@ -15,7 +15,7 @@ export async function eventHandler() {
         const sysEvent = event.sysEvent;
         const menuItemClickEvent = event.menuItemClickEvent;
 
-        if (listEvent?.containerName === 'buttons') {
+        if (listEvent?.containerName === 'buttons' && spotifyPresenter.supportsPlaybackControl()) {
             const buttonName = listEvent.currentSelectItemName?.trim();
             console.log(`${listEvent.currentSelectItemIndex ?? ''} ${buttonName ?? ''}`);
 

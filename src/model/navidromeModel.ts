@@ -23,6 +23,10 @@ type NavidromeNowPlayingEntry = {
   state?: string;
   username?: string;
   playerName?: string;
+  // Non-Subsonic extras a server may add to advertise remote control of a player.
+  // A stock Navidrome omits them, which keeps transport control disabled there.
+  sessionId?: string;
+  canControl?: boolean;
 };
 
 export type NavidromePlaybackClient = {
@@ -74,6 +78,10 @@ class NavidromeModel {
   private selectedClientName = '';
   private playbackClients: NavidromePlaybackClient[] = [];
   private DRIFT_THRESHOLD = 0.1; // Seconds
+  // Transport control is a per-player capability advertised by the server, not a
+  // global one: a Jellyfin desktop client can be driven, its Android app cannot.
+  private selectedSessionId = '';
+  private selectedCanControl = false;
 
   async init(): Promise<boolean> {
     this.baseUrl = normalizeBaseUrl((await storage.getItem('navidrome_base_url')) ?? '');
@@ -146,6 +154,13 @@ class NavidromeModel {
       this.playbackClients = entries.map(toClientSummary);
 
       if (entries.length === 0) {
+        // Keep the last player's controls while its song is still shown: a paused
+        // session can briefly drop out of getNowPlaying, and "play" is exactly what
+        // the user wants then.
+        if (this.currentSong.songID === '0') {
+          this.selectedCanControl = false;
+          this.selectedSessionId = '';
+        }
         if (this.currentSong.songID !== '0') {
           this.currentSong.addisPlaying(false);
         }
@@ -154,6 +169,9 @@ class NavidromeModel {
 
       const selectedEntry = entries.find(entry => normalizeClientName(entry) === this.selectedClientName)
         ?? entries[0];
+
+      this.selectedSessionId = selectedEntry.sessionId ?? '';
+      this.selectedCanControl = selectedEntry.canControl === true && this.selectedSessionId !== '';
 
       const selectedClientName = normalizeClientName(selectedEntry);
       if (selectedClientName !== this.selectedClientName) {
@@ -242,20 +260,58 @@ class NavidromeModel {
     return undefined;
   }
 
+  supportsControl(): boolean {
+    return this.selectedCanControl;
+  }
+
+  /**
+   * Subsonic has no transport verbs, so control rides a small side API the server may
+   * expose at /control/<command>. Same credentials, plain GET (no CORS preflight).
+   * A server that doesn't implement it never advertises `canControl`, so this is
+   * never reached against a stock Navidrome.
+   */
+  private async sendControl(command: string): Promise<void> {
+    if (!this.selectedCanControl) {
+      console.log(`[Navidrome] ${command} ignored — the selected player is not remote-controllable.`);
+      return;
+    }
+    // Control calls are queued one after another, so a request that never answers
+    // must not block every later button press.
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), 5000);
+    try {
+      const params = await this.authQueryParams();
+      params.set('session', this.selectedSessionId);
+      const response = await fetch(`${this.baseUrl}/control/${command}?${params.toString()}`, { signal: abort.signal });
+      const body = await response.json().catch(() => null);
+      if (!response.ok || !body?.ok) {
+        console.error(`[Navidrome] ${command} failed: ${body?.error ?? response.status}`);
+        return;
+      }
+      // Optimistic local flip so the lens reacts before the next poll corrects it.
+      if (command === 'pause') this.currentSong.addisPlaying(false);
+      if (command === 'play') this.currentSong.addisPlaying(true);
+    } catch (error) {
+      console.error(`[Navidrome] ${command} failed:`, error);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   async song_Pause() {
-    console.log('[Navidrome] Pause is not supported from the Even Hub app.');
+    await this.sendControl('pause');
   }
 
   async song_Play() {
-    console.log('[Navidrome] Play is not supported from the Even Hub app.');
+    await this.sendControl('play');
   }
 
   async song_Back() {
-    console.log('[Navidrome] Previous track is not supported from the Even Hub app.');
+    await this.sendControl('previous');
   }
 
   async song_Forward() {
-    console.log('[Navidrome] Next track is not supported from the Even Hub app.');
+    await this.sendControl('next');
   }
 
   private async fetchArtAsync(coverArtId: string, song: Song): Promise<void> {
